@@ -8,6 +8,15 @@ public class Dols : MonoBehaviour {
     private GameObject[] wplayDols = new GameObject[8];
     private GameObject[] bplayDols = new GameObject[8];
 
+    
+    private int[] firstBplayDols = new int[] { 0 * 100+ 7 , 1*100+ 7 ,  2*100 + 7 , 3*100 + 7 , 4*100 + 7 , 5*100 + 7 , 6*100+ 7, 7 * 100 + 7 };
+    private int[] firstWplayDols = new int[] { 0 * 100+ 0, 1 * 100 + 0 , 2 * 100 + 0 , 3 * 100 + 0 , 4 * 100 + 0 , 5 * 100 + 0 , 6 * 100 + 0, 7 * 100 + 0 };
+    
+    private float firstX = -2.94f;
+    private float firstY = -2.94f;
+    private float dolGapX = 0.85f;
+    private float dolGapY = 0.85f;
+
     // Use this for initialization
     void Start () {
         InitDols();
@@ -20,17 +29,36 @@ public class Dols : MonoBehaviour {
         Vector3 viewPos = Camera.main.ScreenToViewportPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
 
         //Debug.Log(string.Format("{0} {1} == {2} {3}", Input.mousePosition.x, Input.mousePosition.y , viewPos.x, viewPos.y));
+    }
+    
+    int getDolTypeByIdx(int idx , int idy)
+    {
+        // 0:none ,1:white , 2:black
+        int result = 0;
+
+        foreach(int curValue in firstWplayDols)
+        {
+            int parserX = curValue / 100;
+            int parserY = curValue - (parserX*100);
+            
+            if (parserX == idx && parserY == idy)
+                return 1;
+        }
+
+        foreach (int curValue in firstBplayDols)
+        {
+            int parserX = curValue / 100;
+            int parserY = curValue - (parserX * 100);
+
+            if (parserX == idx && parserY == idy)
+                return 2;
+        }
+        return result;
     } 
 
     Vector3 getPosByIdx(float idxX, float idxY)
     {
-        // -0.294 / -2.86
-
-        float firstX = -2.94f;
-        float firstY = -2.94f;
-        float dolGapX = 0.85f;
-        float dolGapY = 0.85f;
-
+        // -0.294 / -2.86        
         float screenX = idxX * dolGapX + firstX;
         float screenY = idxY * dolGapY + firstY;
 
@@ -54,37 +82,32 @@ public class Dols : MonoBehaviour {
         {
             for(int idy=0; idy<8; idy++)
             {
-
                 GameObject dol = Instantiate(playDol, new Vector3(0, 0, 0), Quaternion.identity) as GameObject;                
                 dol.transform.position = getPosByIdx(idx, idy);
-
                 PlayDol pdol = dol.GetComponent<PlayDol>();
+;
 
-                bool debugAllWhite = false;
-
-                if (idy == 0 || debugAllWhite == true)
+                if ( getDolTypeByIdx(idx, idy) ==1 )
                 {
                     pdol.SetDolColor(1);
+                    pdol.SetDolPos(idx, idy);
                     wplayDols[idx] = dol;
                     dol.name = "whiteDol-"+ idx;
 
                 }
-                else if (idy == 7)
+                else if (getDolTypeByIdx(idx, idy) == 2)
                 {
                     pdol.SetDolColor(2);
+                    pdol.SetDolPos(idx, idy);
                     bplayDols[idx] = dol;
                     dol.name = "blackDol-" + idx;
                 }
                 else
                 {
                     pdol.SetDolColor(0);
+                    pdol.SetDolPos(idx, idy);
                     dol.name = "empty-" + idx + ":" + idy;
                 }
-                //((dol.GetComponentInChildren<PlayDol>) as PlayDol).SetDolColor(true);
-                //dol.get
-
-                //(dos as Sprite).
-
                 
             }
             

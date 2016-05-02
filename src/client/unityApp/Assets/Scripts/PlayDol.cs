@@ -11,6 +11,9 @@ public class PlayDol : MonoBehaviour {
 
     private SpriteRenderer sr;
     private int mydolType = 0;
+    private Vector3 chkSize = new Vector3(0.6f, 0.6f, 0);
+
+    private Vector2 dolPos = new Vector2(0, 0);
 
     // Use this for initialization
     void Start () {
@@ -19,78 +22,89 @@ public class PlayDol : MonoBehaviour {
 
     }
 
+    void onSelectDol()
+    {
+        if (Game.lastMovedDol != null)
+        {
+            if (Game.lastMovedDol.name == this.name)
+            {
+                Debug.Log(string.Format("DuplicatedBound - SelectedDol:{0}", this));
+                return;
+            }
+        }
+
+        Game.selectedDol = this;
+        indicator.transform.position = transform.position;
+        indicator.SetActive(true);
+        Debug.Log(string.Format("Bound - SelectedDol:{0}", this));
+    }
+
+    void onSelectTarget()
+    {
+        if (Game.selectedDol != null)
+        {
+            Game.targetDol = this;
+            Debug.Log(string.Format("Bound - Taeget:{0}", this));
+        }
+    }
+
+    void onRemoveDol()
+    {
+        SetDolColor(0);
+        indicator.SetActive(false);
+    }
+
+
+    void onMoveDol()
+    {
+        if (Game.selectedDol != null && Game.targetDol != null && mydolType == 0)
+        {
+            Game.lastMovedDol = Game.selectedDol;
+            Debug.Log(string.Format("Bound - SwapDol:{0} {1}", Game.selectedDol.name, Game.targetDol.name));
+
+            SwapDolPos(ref Game.selectedDol, ref Game.targetDol);
+
+            Game.selectedDol = null;
+            Game.targetDol = null;
+            indicator.SetActive(false);
+
+        }
+
+    }
+
     void CheckMouse(int mouseEvt=1)
     {
         Vector3 mousePos = Camera.main.ScreenToWorldPoint( new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0) );
         mousePos.z = 0;
 
-        Vector3 objPos = new Vector3(sr.transform.position.x, sr.transform.position.y, 0);
-
-
+        Vector3 objPos = new Vector3(sr.transform.position.x, sr.transform.position.y, 0);        
         //Debug.Log(string.Format("Chk - Mouse:{0} Obj:{1}", mousePos, objPos ));
         
-        Vector3 chkSize = new Vector3(0.6f, 0.6f, 0);
         Bounds myBound = new Bounds(sr.bounds.center, chkSize);
 
         if ( true == myBound.Contains(mousePos))
         {
-
-
             //Debug.Log(string.Format("Bound - {0} {1} {2}", name, mousePos, objPos));
-
             if (mouseEvt == 0)
             {
                 if (mydolType > 0)
                 {
-                    if(Game.lastMovedDol != null)
-                    {
-                        if (Game.lastMovedDol.name == this.name)
-                        {
-                            Debug.Log(string.Format("DuplicatedBound - SelectedDol:{0}", this));
-                            return;
+                    onSelectDol();
 
-                        }
-                            
-                    }
-
-                    Game.selectedDol = this;
-                    indicator.transform.position = transform.position;
-                    indicator.SetActive(true);
-                    Debug.Log(string.Format("Bound - SelectedDol:{0}", this));
                 }
 
                 if (mydolType == 0)
                 {
-                    if (Game.selectedDol != null)
-                    {
-                        Game.targetDol = this;
-                        Debug.Log(string.Format("Bound - Taeget:{0}", this));
-
-                    }
+                    onSelectTarget();                    
                 }
-
-                if (Game.selectedDol != null && Game.targetDol != null && mydolType == 0)
-                {
-                    Game.lastMovedDol = Game.selectedDol;
-                    Debug.Log(string.Format("Bound - SwapDol:{0} {1}", Game.selectedDol.name,Game.targetDol.name ));
-
-                    Vector3 oriPos = Game.selectedDol.transform.position;
-                    Game.selectedDol.transform.position = Game.targetDol.transform.position;
-                    Game.targetDol.transform.position = oriPos;
-                    Game.selectedDol = null;
-                    Game.targetDol = null;
-                    indicator.SetActive(false);
-                    
-                }
+                onMoveDol();
+                
             }
 
             if (mouseEvt == 1)
             {
-                SetDolColor(0);
-                indicator.SetActive(false);
-            }
-
-            
+                onRemoveDol();                
+            }            
         }
 
     }
@@ -117,9 +131,31 @@ public class PlayDol : MonoBehaviour {
                 sr = GetComponent<SpriteRenderer>();
                 sr.sprite = bDol;
                 break;
-        }
-        
+        }        
     }
+
+    public void SetDolPos(int x , int y)
+    {
+        dolPos.x = x;
+        dolPos.y = y;
+    }
+
+    static public void SwapDolPos(ref PlayDol left,ref PlayDol right)
+    {
+        Vector3 oriPos = left.transform.position;
+        left.transform.position = right.transform.position;
+        right.transform.position = oriPos;
+
+        Vector2 temp = new Vector2(0, 0);
+        temp.x = left.dolPos.x;
+        temp.y = left.dolPos.y;
+
+        left.dolPos.x = right.dolPos.x;
+        left.dolPos.y = right.dolPos.y;
+        right.dolPos.x = temp.x;
+        right.dolPos.y = temp.y;        
+    }
+
 	
 	// Update is called once per frame
 	void Update () {
