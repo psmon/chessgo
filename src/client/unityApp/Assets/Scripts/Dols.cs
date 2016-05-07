@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using CommData;
 
 public class Dols : MonoBehaviour {
 
