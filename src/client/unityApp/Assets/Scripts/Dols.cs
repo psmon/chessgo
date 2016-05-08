@@ -20,7 +20,8 @@ public class Dols : MonoBehaviour {
 
 
     private float firstX = -2.94f;
-    private float firstY = -2.94f;
+    //private float firstY = -2.94f;
+    private float firstY = -1.95f;
     private float dolGapX = 0.85f;
     private float dolGapY = 0.85f;
 
