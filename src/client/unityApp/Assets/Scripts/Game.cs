@@ -10,7 +10,7 @@ public class Game : MonoBehaviour {
     public static PlayDol lastMovedDol;
     public static Dols    dols;
 
-    private WebSocket ws = new WebSocket("ws://192.168.0.30/GoGame");
+    private static WebSocket ws = new WebSocket("ws://192.168.0.30/GoGame");
 
     protected Queue<string> packetList = new Queue<string>();
 
@@ -30,6 +30,30 @@ public class Game : MonoBehaviour {
         ws.Connect();        
         ws.Send( loginInfo.ToString() );
         
+    }
+
+    public static void send(string sendData)
+    {
+        ws.Send(sendData);
+    }
+
+    public void SwapDolPos(VectorDol leftPos , VectorDol rightPos)
+    {
+        PlayDol left = Dols.getPlayDolByIdx(leftPos.x, leftPos.y);
+        PlayDol right = Dols.getPlayDolByIdx(rightPos.x, rightPos.y);
+
+        if(left!=null && right != null)
+        {
+            Vector3 oriPos = left.transform.position;
+            left.transform.position = right.transform.position;
+            right.transform.position = oriPos;
+
+            VectorDol temp = new VectorDol();
+            temp.setPos(left.GetDolPos());
+
+            left.SetDolPos(right.GetDolPos());
+            right.SetDolPos(temp);
+        }        
     }
 
     private void ProcessPackets()
@@ -74,7 +98,11 @@ public class Game : MonoBehaviour {
                     dols.CleanDols();
                     dols.InitDols();
                 }
-
+                break;
+            case "MoveInfoRes":
+                MoveInfoRes moveInfoRes = new MoveInfoRes();
+                moveInfoRes.FromJsonOverwrite(jsonObject.data);
+                SwapDolPos(moveInfoRes.source, moveInfoRes.target);
                 break;
         }
 

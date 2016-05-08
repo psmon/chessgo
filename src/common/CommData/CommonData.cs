@@ -79,6 +79,19 @@ namespace CommData
     {
         public int x;
         public int y;
+
+        public void setPos(int _x, int _y)
+        {
+            x = _x;
+            y = _y;
+        }
+
+        public void setPos(VectorDol copyDaya)
+        {
+            x = copyDaya.x;
+            y = copyDaya.y;
+        }
+
     }
 
     [Serializable]
@@ -108,6 +121,30 @@ namespace CommData
                 }               
             }
         }                
+    }
+
+    [Serializable]
+    public class MoveInfoReq : BaseWebData
+    {
+        public string pid = "MoveInfoReq";
+        public VectorDol source = new VectorDol();
+        public VectorDol target = new VectorDol();
+    }
+
+    [Serializable]
+    public class MoveInfoRes : BaseWebData
+    {
+        public string pid = "MoveInfoRes";
+        public VectorDol source = new VectorDol();
+        public VectorDol target = new VectorDol();
+        public void writeFromReqData(MoveInfoReq sourceData)
+        {
+            source.x = sourceData.source.x;
+            source.y = sourceData.source.y;
+            target.x = sourceData.target.x;
+            target.y = sourceData.target.y;
+        }
+        
     }
 
 

@@ -9,7 +9,7 @@ public class Dols : MonoBehaviour {
     private GameObject[] wplayDols = new GameObject[8];
     private GameObject[] bplayDols = new GameObject[8];
 
-    private List<GameObject> allDols = new List<GameObject>();
+    private static List<GameObject> allDols = new List<GameObject>();
 
     
     //private int[] firstBplayDols = new int[] { 0 * 100+ 7 , 1*100+ 7 ,  2*100 + 7 , 3*100 + 7 , 4*100 + 7 , 5*100 + 7 , 6*100+ 7, 7 * 100 + 7 };
@@ -74,7 +74,7 @@ public class Dols : MonoBehaviour {
         Vector3 worldPos = Camera.main.ViewportToWorldPoint(viewPos);
         Vector3 worldPos2 = Camera.main.ViewportToWorldPoint(new Vector3(screenX,  screenY, 0));
 
-        Debug.Log(string.Format("{0} {1} == {2} {3}", screenX, screenY, worldPos.x, worldPos.y));
+        //Debug.Log(string.Format("{0} {1} == {2} {3}", screenX, screenY, worldPos.x, worldPos.y));
         worldPos.z = 0;
         worldPos2.z = 0;
         
@@ -90,6 +90,22 @@ public class Dols : MonoBehaviour {
         }
         allDols.Clear();
         
+    }
+
+    public static PlayDol getPlayDolByIdx(int idx , int idy)
+    {
+        PlayDol result = null;
+        foreach(GameObject gameObj in allDols)
+        {
+            PlayDol pdol = gameObj.GetComponent<PlayDol>();
+
+            if(pdol.GetDolPos().x == idx && pdol.GetDolPos().y == idy)
+            {
+                result = pdol;
+                break;
+            }
+        }
+        return result;
     }
 
     public void InitDols()

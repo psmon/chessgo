@@ -17,8 +17,11 @@ namespace serverApp
         private List<GamePlayer> gamePlayers = new List<GamePlayer>();
         private List<GamePlayer> unfinishedPlayer = new List<GamePlayer>();
 
-        private GamePlayer blackPlayer;
-        private GamePlayer whitePlayer;
+        private GamePlayer blackPlayer = null;
+        private GamePlayer whitePlayer = null;
+        private GamePlayer lastLeavePlayer = null;
+
+        private bool isNowPlayerBlack;
 
         public bool createGameTable(int gameNo)
         {
@@ -26,6 +29,7 @@ namespace serverApp
             tableInfo.plyCount = 0;
             tableInfo.plyMaxCount = 2;
             gameState = GameTableState.READYFORPLAYER;
+            isNowPlayerBlack = false;
             return true;
         }
 
@@ -61,7 +65,10 @@ namespace serverApp
 
             blackDolInfo.isMe = true;
             blackPlayer.sendData("DolsInfo", blackDolInfo);
-            
+
+            gameState = GameTableState.PLAYING;
+
+
         }
 
         public bool joinGame(GamePlayer gamePlayer)
@@ -86,8 +93,25 @@ namespace serverApp
 
                 if (tableInfo.plyCount == 2)
                 {
-                    gamePlayer.createDolInfo(true);
-                    blackPlayer = gamePlayer;
+                    if (lastLeavePlayer != null)
+                    {
+                        if (lastLeavePlayer.isBlack == false)
+                        {
+                            gamePlayer.createDolInfo(false);
+                            whitePlayer = gamePlayer;
+                        }
+                        else
+                        {
+                            gamePlayer.createDolInfo(true);
+                            blackPlayer = gamePlayer;
+                        }
+                    }
+                    else
+                    {
+                        gamePlayer.createDolInfo(true);
+                        blackPlayer = gamePlayer;
+                    }
+                    
                     prePareGame();
                 }
                                     
@@ -106,12 +130,36 @@ namespace serverApp
                     {
                         gamePlayers.Remove(idxPlayer);
                         tableInfo.plyCount--;
-                        ServerLog.writeLog(string.Format("leaveGame {0} in GameNo:{1} plyCount:{2}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount));
+                        ServerLog.writeLog(string.Format("leaveGame {0} in GameNo:{1} plyCount:{2} isblack:{3}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount , gamePlayer.isBlack ));
+                        lastLeavePlayer = gamePlayer;
                         break;
                     }
                 }
             }
+        }
+        
+        public void sendAllData(string pid , object sendObj)
+        {
+            if (whitePlayer!=null && blackPlayer != null)
+            {
+                whitePlayer.sendData(pid, sendObj);
+                blackPlayer.sendData(pid, sendObj);
+            }
 
-        }        
+        }
+
+        public void moveInfoReq(MoveInfoReq req, bool isBlack)
+        {
+            if(gameState == GameTableState.PLAYING)
+            {
+                MoveInfoRes moveInfoRes = new MoveInfoRes();
+                moveInfoRes.writeFromReqData(req);
+                sendAllData("MoveInfoRes", moveInfoRes);
+                isNowPlayerBlack = !isNowPlayerBlack;
+                
+            }
+
+        }
+                
     }
 }

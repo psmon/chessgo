@@ -79,10 +79,15 @@ namespace serverApp
                             myDeviceID = loginInfo.deviceId;
                             loginRes.loginResult = 1;
                         }                        
-                        sendData("LoginInfoRes", loginRes);                        
+                        sendData("LoginInfoRes", loginRes);
+                        myGame = ServerApp.getGameTableActor().quickJoin(this);
+                        break;
+                    case "MoveInfoReq":
+                        MoveInfoReq moveInfo = new JavaScriptSerializer().ConvertToType<MoveInfoReq>(jsonObject);
+                        myGame.moveInfoReq(moveInfo, isBlack);                        
                         break;
                 }                
-                myGame = ServerApp.getGameTableActor().quickJoin(this);                
+                                
             }
             catch(Exception ex)
             {

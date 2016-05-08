@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using CommData;
 
 
 public class PlayDol : MonoBehaviour {
@@ -13,7 +14,7 @@ public class PlayDol : MonoBehaviour {
     private int mydolType = 0;
     private Vector3 chkSize = new Vector3(0.6f, 0.6f, 0);
 
-    private Vector2 dolPos = new Vector2(0, 0);
+    private VectorDol dolPos = new VectorDol();
 
     // Use this for initialization
     void Start () {
@@ -62,7 +63,13 @@ public class PlayDol : MonoBehaviour {
             Game.lastMovedDol = Game.selectedDol;
             Debug.Log(string.Format("Bound - SwapDol:{0} {1}", Game.selectedDol.name, Game.targetDol.name));
 
-            SwapDolPos(ref Game.selectedDol, ref Game.targetDol);
+            //SwapDolPos(ref Game.selectedDol, ref Game.targetDol);
+
+            MoveInfoReq moveInfoReq = new MoveInfoReq();            
+            moveInfoReq.source.setPos(Game.selectedDol.dolPos);
+            moveInfoReq.target.setPos(Game.targetDol.dolPos);
+
+            Game.send(moveInfoReq.ToString());
 
             Game.selectedDol = null;
             Game.targetDol = null;
@@ -140,22 +147,16 @@ public class PlayDol : MonoBehaviour {
         dolPos.y = y;
     }
 
-    static public void SwapDolPos(ref PlayDol left,ref PlayDol right)
+    public void SetDolPos(VectorDol pos)
     {
-        Vector3 oriPos = left.transform.position;
-        left.transform.position = right.transform.position;
-        right.transform.position = oriPos;
-
-        Vector2 temp = new Vector2(0, 0);
-        temp.x = left.dolPos.x;
-        temp.y = left.dolPos.y;
-
-        left.dolPos.x = right.dolPos.x;
-        left.dolPos.y = right.dolPos.y;
-        right.dolPos.x = temp.x;
-        right.dolPos.y = temp.y;        
+        dolPos.x = pos.x;
+        dolPos.y = pos.y;
     }
 
+    public VectorDol GetDolPos()
+    {
+        return dolPos;
+    }
 	
 	// Update is called once per frame
 	void Update () {
