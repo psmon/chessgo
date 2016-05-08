@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 using CommData;
 
 public class Dols : MonoBehaviour {
@@ -8,10 +9,16 @@ public class Dols : MonoBehaviour {
     private GameObject[] wplayDols = new GameObject[8];
     private GameObject[] bplayDols = new GameObject[8];
 
+    private List<GameObject> allDols = new List<GameObject>();
+
     
-    private int[] firstBplayDols = new int[] { 0 * 100+ 7 , 1*100+ 7 ,  2*100 + 7 , 3*100 + 7 , 4*100 + 7 , 5*100 + 7 , 6*100+ 7, 7 * 100 + 7 };
-    private int[] firstWplayDols = new int[] { 0 * 100+ 0, 1 * 100 + 0 , 2 * 100 + 0 , 3 * 100 + 0 , 4 * 100 + 0 , 5 * 100 + 0 , 6 * 100 + 0, 7 * 100 + 0 };
-    
+    //private int[] firstBplayDols = new int[] { 0 * 100+ 7 , 1*100+ 7 ,  2*100 + 7 , 3*100 + 7 , 4*100 + 7 , 5*100 + 7 , 6*100+ 7, 7 * 100 + 7 };
+    //private int[] firstWplayDols = new int[] { 0 * 100+ 0, 1 * 100 + 0 , 2 * 100 + 0 , 3 * 100 + 0 , 4 * 100 + 0 , 5 * 100 + 0 , 6 * 100 + 0, 7 * 100 + 0 };
+
+    public DolsInfo firstBplayDols;
+    public DolsInfo firstWplayDols;
+
+
     private float firstX = -2.94f;
     private float firstY = -2.94f;
     private float dolGapX = 0.85f;
@@ -19,8 +26,8 @@ public class Dols : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        InitDols();
-
+        //InitDols();
+        Game.dols = this;
 
     }
 
@@ -36,19 +43,19 @@ public class Dols : MonoBehaviour {
         // 0:none ,1:white , 2:black
         int result = 0;
 
-        foreach(int curValue in firstWplayDols)
+        foreach(VectorDol curValue in firstWplayDols.list)
         {
-            int parserX = curValue / 100;
-            int parserY = curValue - (parserX*100);
+            int parserX = curValue.x;
+            int parserY = curValue.y;
             
             if (parserX == idx && parserY == idy)
                 return 1;
         }
 
-        foreach (int curValue in firstBplayDols)
+        foreach (VectorDol curValue in firstBplayDols.list)
         {
-            int parserX = curValue / 100;
-            int parserY = curValue - (parserX * 100);
+            int parserX = curValue.x;
+            int parserY = curValue.y;
 
             if (parserX == idx && parserY == idy)
                 return 2;
@@ -75,7 +82,17 @@ public class Dols : MonoBehaviour {
         return oriPos;
     }
 
-    void InitDols()
+    public void CleanDols()
+    {
+        foreach(GameObject obj in allDols)
+        {
+            Destroy(obj);
+        }
+        allDols.Clear();
+        
+    }
+
+    public void InitDols()
     {
         //GameObject dol = (GameObject)Instantiate(Resources.Load("Images"));
         for(int idx=0; idx<8; idx++)
@@ -108,7 +125,9 @@ public class Dols : MonoBehaviour {
                     pdol.SetDolPos(idx, idy);
                     dol.name = "empty-" + idx + ":" + idy;
                 }
-                
+
+                allDols.Add(dol);
+
             }
             
         }

@@ -13,7 +13,12 @@ namespace serverApp
 
         private GameTableState gameState = GameTableState.NOTINIT;
         private TableInfo tableInfo = new TableInfo();
+
         private List<GamePlayer> gamePlayers = new List<GamePlayer>();
+        private List<GamePlayer> unfinishedPlayer = new List<GamePlayer>();
+
+        private GamePlayer blackPlayer;
+        private GamePlayer whitePlayer;
 
         public bool createGameTable(int gameNo)
         {
@@ -36,6 +41,28 @@ namespace serverApp
                 return tableInfo.GetAvableUserCount();
             }            
         }
+        
+        public void prePareGame()
+        {
+            ServerLog.writeLog(string.Format("startGame:{0}", tableInfo.gameNo));
+            var whiteDolInfo = whitePlayer.dolsInfo;
+            var blackDolInfo = blackPlayer.dolsInfo;
+
+            //send white
+            whiteDolInfo.isMe = true;
+            whitePlayer.sendData("DolsInfo", whiteDolInfo);
+
+            whiteDolInfo.isMe = false;
+            blackPlayer.sendData("DolsInfo", whiteDolInfo);
+
+            //send black
+            blackDolInfo.isMe = false;
+            whitePlayer.sendData("DolsInfo", blackDolInfo);
+
+            blackDolInfo.isMe = true;
+            blackPlayer.sendData("DolsInfo", blackDolInfo);
+            
+        }
 
         public bool joinGame(GamePlayer gamePlayer)
         {
@@ -46,12 +73,25 @@ namespace serverApp
                     ServerLog.writeLog(string.Format("joinGame Failed {0} in GameNo:{1} plyCount:{2}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount));
                     return false;
                 }
-                    
 
                 gamePlayers.Add(gamePlayer);
                 tableInfo.plyCount++;
-                ServerLog.writeLog(string.Format("joinGame {0} in GameNo:{1} plyCount:{2}", gamePlayer.ID, tableInfo.gameNo , tableInfo.plyCount ));
 
+                if (tableInfo.plyCount == 1)
+                {
+                    gamePlayer.createDolInfo(false);
+                    whitePlayer = gamePlayer;
+                }
+
+
+                if (tableInfo.plyCount == 2)
+                {
+                    gamePlayer.createDolInfo(true);
+                    blackPlayer = gamePlayer;
+                    prePareGame();
+                }
+                                    
+                ServerLog.writeLog(string.Format("joinGame {0} in GameNo:{1} plyCount:{2}", gamePlayer.ID, tableInfo.gameNo , tableInfo.plyCount ));
             }            
             return true;
         }

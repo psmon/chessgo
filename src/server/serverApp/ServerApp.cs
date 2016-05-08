@@ -7,8 +7,11 @@ using System.Threading.Tasks;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
+using UnityEngine;
+
 namespace serverApp
 {
+    
     public static class ServerApp
     {
         private static GameTableActor gameTableActor = new GameTableActor();
