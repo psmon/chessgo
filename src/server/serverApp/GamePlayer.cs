@@ -15,7 +15,7 @@ namespace serverApp
     public class GamePlayer : WebSocketBehavior
     {
         protected GameActor myGame = null;
-        protected string myDeviceID;
+        public string myDeviceID;
         public bool isBlack;
         public DolsInfo dolsInfo;
         protected Timer timer = new Timer(15000);

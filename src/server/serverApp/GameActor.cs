@@ -105,6 +105,15 @@ namespace serverApp
                     return false;
                 }
 
+                foreach(GamePlayer player in gamePlayers)
+                {
+                    if (gamePlayer.myDeviceID == player.myDeviceID)
+                    {
+                        gamePlayers.Remove(player);
+                        break;
+                    }
+                }
+
                 gamePlayers.Add(gamePlayer);
                 tableInfo.plyCount++;
 
@@ -145,7 +154,7 @@ namespace serverApp
             {
                 foreach(GamePlayer idxPlayer in gamePlayers)
                 {
-                    if(gamePlayer.ID == idxPlayer.ID)
+                    if(gamePlayer.myDeviceID == idxPlayer.myDeviceID)
                     {
                         gamePlayers.Remove(idxPlayer);
                         tableInfo.plyCount--;

@@ -19,9 +19,10 @@ public class Game : MonoBehaviour {
     private static WebSocket ws = null;
     private static Queue<string> packetList = new Queue<string>();
     protected Text txtServerState;
+
     protected Button btn_singGame;
     protected Button btn_pvpGame;
-    protected Button BtnHelp;
+    
     
     protected string deviceId;
 
@@ -30,6 +31,9 @@ public class Game : MonoBehaviour {
     protected Text txtGameResult;
 
     protected Image panelResult;
+
+    protected Image pannelHelp;
+    protected Text txtHelp;
     
 
     protected int myPlyScore = 0;
@@ -52,6 +56,9 @@ public class Game : MonoBehaviour {
         panelResult = GameObject.Find("panelResult").GetComponent<Image>();
         txtGameResult = GameObject.Find("txtGameResult").GetComponent<Text>();
 
+        pannelHelp = GameObject.Find("pannelHelp").GetComponent<Image>();
+        txtHelp = GameObject.Find("txtHelp").GetComponent<Text>();
+
         panelResult.enabled = false;
         txtGameResult.enabled = false;
 
@@ -59,9 +66,6 @@ public class Game : MonoBehaviour {
         
         btn_pvpGame = GameObject.Find("Btn_Multi").GetComponent<Button>();
         
-        BtnHelp = GameObject.Find("BtnHelp").GetComponent<Button>();
-        
-
         //btn_singGame.onClick.AddListener(delegate { test("test"); });
         
     }
@@ -83,9 +87,10 @@ public class Game : MonoBehaviour {
 
     public void startLocalGame()
     {
-        showResult("", false);
+        pannelHelp.enabled = false;
+        txtHelp.enabled = false;
         dols.CleanDols();
-        dols.offLineInit();
+        dols.offLineInit();        
         TurnInfo turnInfo = new TurnInfo();
         turnInfo.isMe = true;
         turnInfo.isBlack = false;
@@ -100,6 +105,7 @@ public class Game : MonoBehaviour {
 
         Debug.Log("onStartGame_Single");
         Game.isOffLineMode = true;
+        onStageInit();
         startLocalGame();
 
     }
@@ -145,6 +151,9 @@ public class Game : MonoBehaviour {
 
     public void onStageInit()
     {
+        pannelHelp.enabled = false;
+        txtHelp.enabled = false;
+
         myPlyScore = 0;
         otherPlyScore = 0;
         txtMyPlyScore.text = "MyScore:" + myPlyScore;
@@ -221,8 +230,7 @@ public class Game : MonoBehaviour {
                 //Application.Quit();
                 break;
             case "LoginInfoRes":
-                isOffLineMode = false;
-                isNetworkPlay = true;
+                isOffLineMode = false;                
                 LoginInfoRes loginRes = new LoginInfoRes();
                 loginRes.FromJsonOverwrite(jsonObject.data);
                 Debug.Log("LoginInfoRes: " + loginRes.ToString());
@@ -232,6 +240,7 @@ public class Game : MonoBehaviour {
                 break;
             case "DolsInfo":
                 isOffLineMode = false;
+                isNetworkPlay = true;
                 DolsInfo dolsinfo = new DolsInfo();
                 dolsinfo.FromJsonOverwrite(jsonObject.data);
                 Debug.Log("DolsInfo: " + dolsinfo.ToString());
@@ -247,8 +256,6 @@ public class Game : MonoBehaviour {
                     dols.CleanDols();
                     dols.InitDols();
                 }
-                isNetworkPlay = true;
-
                 onStageInit();                
                 break;
             case "MoveInfoRes":
