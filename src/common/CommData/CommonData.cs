@@ -188,7 +188,13 @@ namespace CommData
     {
         public string pid = "KeepAlive";
         public int res;
+    }
 
+    [Serializable]
+    public class QuickSeatReq : BaseWebData
+    {
+        public string pid = "QuickSeatReq";
+        public int res;
     }
 
 }

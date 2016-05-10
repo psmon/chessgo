@@ -36,8 +36,7 @@ namespace serverApp
 
         protected override void OnOpen()
         {
-            ServerLog.writeLog(string.Format("OnOpen GamePlayer:{0}", ID));
-            timer.Start();
+            ServerLog.writeLog(string.Format("OnOpen GamePlayer:{0}", ID));            
 
         }
 
@@ -52,9 +51,9 @@ namespace serverApp
 
         protected override void OnError(ErrorEventArgs e)
         {
+            timer.Stop();
             if (myGame != null)
-            {
-                timer.Stop();
+            {                
                 ServerApp.getGameTableActor().leaveGame(this);
                 myGame = null;
             }
@@ -64,9 +63,9 @@ namespace serverApp
 
         protected override void OnClose(CloseEventArgs e)
         {
+            timer.Stop();
             if (myGame != null)
-            {
-                timer.Stop();
+            {                
                 ServerApp.getGameTableActor().leaveGame(this);
                 myGame = null;
             }
@@ -104,7 +103,10 @@ namespace serverApp
                             myDeviceID = loginInfo.deviceId;
                             loginRes.loginResult = 1;
                         }                        
-                        sendData("LoginInfoRes", loginRes);
+                        sendData("LoginInfoRes", loginRes);                        
+                        break;
+                    case "QuickSeatReq":
+                        
                         myGame = ServerApp.getGameTableActor().quickJoin(this);
                         break;
                     case "MoveInfoReq":

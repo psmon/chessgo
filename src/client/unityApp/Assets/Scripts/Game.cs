@@ -83,6 +83,7 @@ public class Game : MonoBehaviour {
 
     public void startLocalGame()
     {
+        showResult("", false);
         dols.CleanDols();
         dols.offLineInit();
         TurnInfo turnInfo = new TurnInfo();
@@ -220,10 +221,14 @@ public class Game : MonoBehaviour {
                 //Application.Quit();
                 break;
             case "LoginInfoRes":
+                isOffLineMode = false;
+                isNetworkPlay = true;
                 LoginInfoRes loginRes = new LoginInfoRes();
                 loginRes.FromJsonOverwrite(jsonObject.data);
                 Debug.Log("LoginInfoRes: " + loginRes.ToString());
                 txtServerState.text = "Wait for MultiPlayer(You Can run SingleGame at waiting)";
+                QuickSeatReq quickSeat = new QuickSeatReq();
+                ws.Send(quickSeat.ToString() );
                 break;
             case "DolsInfo":
                 isOffLineMode = false;
