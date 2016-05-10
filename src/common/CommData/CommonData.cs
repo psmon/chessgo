@@ -147,6 +147,20 @@ namespace CommData
         
     }
 
+    [Serializable]
+    public class TurnInfo : BaseWebData
+    {
+        public bool isMe;
+        public bool isBlack;
+        public int limitTime = 30;
+    }
+
+    [Serializable]
+    public class CrashGameInfo : BaseWebData
+    {
+        public int reason;        //0:다른유져 접속종료..
+    }
+
 
 }
 

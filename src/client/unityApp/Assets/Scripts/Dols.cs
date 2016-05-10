@@ -18,7 +18,6 @@ public class Dols : MonoBehaviour {
     public DolsInfo firstBplayDols;
     public DolsInfo firstWplayDols;
 
-
     private float firstX = -2.94f;
     //private float firstY = -2.94f;
     private float firstY = -1.95f;
@@ -27,9 +26,37 @@ public class Dols : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        //InitDols();
-        Game.dols = this;
+        
+        if(Game.isOffLineMode==true)
+            offLineInit();
 
+        Game.dols = this;
+    }
+
+    void offLineInit()
+    {
+        firstBplayDols = new DolsInfo();
+        firstBplayDols.isBlack = true;
+        firstBplayDols.isMe = true;
+
+        firstWplayDols = new DolsInfo();
+        firstWplayDols.isBlack = false;
+        firstWplayDols.isMe = false;
+
+        for (int i = 0; i < 8; i++)
+        {
+            var addData = new VectorDol();
+            addData.x = i;
+            addData.y = 7;
+            firstBplayDols.list.Add(addData);
+
+            addData = new VectorDol();
+            addData.x = i;
+            addData.y = 0 + i%5;
+            firstWplayDols.list.Add(addData);
+        }        
+
+        InitDols();
     }
 
     void Update()
@@ -107,6 +134,253 @@ public class Dols : MonoBehaviour {
             }
         }
         return result;
+    }
+
+    public static void SetOffAllCanMove()
+    {             
+        foreach (GameObject gameObj in allDols)
+        {
+            PlayDol pdol = gameObj.GetComponent<PlayDol>();
+            pdol.SetOffCanMove();
+        }        
+    }
+
+    public static List<PlayDol> canMoveDolList(PlayDol selectedDol)
+    {
+        List<PlayDol> result = new List<PlayDol>();
+        VectorDol selectPost =  selectedDol.GetDolPos();
+
+        //LeftCechk...
+        for(int idx = selectPost.x -1 ; -1<idx; idx--)
+        {
+            bool canMove = false;
+            PlayDol curDol = getPlayDolByIdx(idx, selectPost.y);
+            if (curDol == null)
+                break;
+
+            if(curDol.GetMyDolType() == 0)
+            {
+                canMove = true;
+                curDol.SetOnCanMove();
+                result.Add(curDol);
+            }
+            if (canMove == false)
+                break;
+        }
+
+        //RightCheck
+        for (int idx = selectPost.x +1; idx < 8; idx++)
+        {
+            bool canMove = false;
+            PlayDol curDol = getPlayDolByIdx(idx, selectPost.y);
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+            {
+                canMove = true;
+                curDol.SetOnCanMove();
+                result.Add(curDol);
+            }
+            if (canMove == false)
+                break;
+
+        }
+
+        //Upcheck
+        for (int idy = selectPost.y +1; idy < 8; idy++)
+        {
+            bool canMove = false;
+            PlayDol curDol = getPlayDolByIdx(selectPost.x, idy );
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+            {
+                canMove = true;
+                curDol.SetOnCanMove();
+                result.Add(curDol);
+            }
+
+            if (canMove == false)
+                break;
+
+        }
+
+        //DownCheck
+        for (int idy = selectPost.y -1; -1 <idy ; idy--)
+        {
+            bool canMove = false;
+            PlayDol curDol = getPlayDolByIdx(selectPost.x, idy);
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+            {
+                canMove = true;
+                curDol.SetOnCanMove();
+                result.Add(curDol);
+            }
+
+            if (canMove == false)
+                break;
+        }        
+        return result;
+    }
+    
+
+    public static int checkGame(PlayDol selectedDol)
+    {
+        int score = 0;
+        List<PlayDol> result = new List<PlayDol>();
+        VectorDol selectPost = selectedDol.GetDolPos();
+
+        //LeftCechk...                
+        List<PlayDol> removeDols = new List<PlayDol>();
+        for (int idx = selectPost.x - 1; -1 < idx; idx--)
+        {
+            PlayDol curDol = getPlayDolByIdx(idx, selectPost.y);
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+                break;
+
+            if(idx == selectPost.x - 1)
+            {
+                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                    break;
+            }
+
+            if(selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            {
+                removeDols.Add(curDol);
+            }
+
+            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            {
+                if (removeDols.Count > 0)
+                {
+                    score += removeDols.Count;
+                    foreach(PlayDol removedol in removeDols)
+                    {
+                        removedol.SetDolColor(0);
+                    }
+                }
+                break;
+            }
+        }
+
+        //RightCheck
+        removeDols = new List<PlayDol>();
+        for (int idx = selectPost.x + 1; idx < 8; idx++)
+        {            
+            PlayDol curDol = getPlayDolByIdx(idx, selectPost.y);
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+                break;
+
+            if (idx == selectPost.x + 1)
+            {
+                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                    break;
+            }
+
+            if (selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            {
+                removeDols.Add(curDol);
+            }
+
+            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            {
+                if (removeDols.Count > 0)
+                {
+                    score += removeDols.Count;
+                    foreach (PlayDol removedol in removeDols)
+                    {
+                        removedol.SetDolColor(0);
+                    }
+                }
+                break;
+            }
+
+        }
+
+        //Upcheck
+        removeDols = new List<PlayDol>();
+        for (int idy = selectPost.y + 1; idy < 8; idy++)
+        {            
+            PlayDol curDol = getPlayDolByIdx(selectPost.x, idy);
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+                break;
+
+            if (idy == selectPost.y + 1)
+            {
+                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                    break;
+            }
+
+            if (selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            {
+                removeDols.Add(curDol);
+            }
+
+            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            {
+                if (removeDols.Count > 0)
+                {
+                    score += removeDols.Count;
+                    foreach (PlayDol removedol in removeDols)
+                    {
+                        removedol.SetDolColor(0);
+                    }
+                }
+                break;
+            }
+
+        }
+
+        //DownCheck
+        removeDols = new List<PlayDol>();
+        for (int idy = selectPost.y - 1; -1 < idy; idy--)
+        {            
+            PlayDol curDol = getPlayDolByIdx(selectPost.x, idy);
+            if (curDol == null)
+                break;
+
+            if (curDol.GetMyDolType() == 0)
+                break;
+
+            if (idy == selectPost.y - 1)
+            {
+                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                    break;
+            }
+
+            if (selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            {
+                removeDols.Add(curDol);
+            }
+
+            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            {
+                if (removeDols.Count > 0)
+                {
+                    score += removeDols.Count;
+                    foreach (PlayDol removedol in removeDols)
+                    {
+                        removedol.SetDolColor(0);
+                    }
+                }
+                break;
+            }
+        }
+        return score;
     }
 
     public void InitDols()

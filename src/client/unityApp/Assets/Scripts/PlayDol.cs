@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
 using CommData;
-
+using System.Collections.Generic;
 
 public class PlayDol : MonoBehaviour {
 
     public Sprite bDol;
     public Sprite wDol;
     public Sprite emtypDol;
+    public Sprite canPoint;
+
     public GameObject indicator;
     public Camera myCamera;
 
@@ -16,15 +18,65 @@ public class PlayDol : MonoBehaviour {
 
     private VectorDol dolPos = new VectorDol();
 
+    private bool isCanMove = false;
+
+    public float moveTime = 0.1f;           //Time it will take object to move, in seconds.        
+    private float inverseMoveTime;
+
+
+    protected System.Collections.IEnumerator Movement(Vector3 end)
+    {
+        //Calculate the remaining distance to move based on the square magnitude of the difference between current position and end parameter. 
+        //Square magnitude is used instead of magnitude because it's computationally cheaper.
+        float sqrRemainingDistance = (transform.position - end).sqrMagnitude;        
+
+        //While that distance is greater than a very small amount (Epsilon, almost zero):
+        while (sqrRemainingDistance > float.Epsilon)
+        {
+            
+            //Find a new position proportionally closer to the end, based on the moveTime
+            Vector3 newPostion = Vector3.MoveTowards(this.transform.position, end,  Time.deltaTime* 4f);
+
+            //Call MovePosition on attached Rigidbody2D and move it to the calculated position.
+            //rb2D.MovePosition(newPostion);
+            this.transform.position = newPostion;
+
+            //Recalculate the remaining distance after moving.
+            sqrRemainingDistance = (transform.position - end).sqrMagnitude;
+
+            //Return and loop until sqrRemainingDistance is close enough to zero to end the function
+            yield return null;
+        }
+    }
+
+    public void move_ani(Vector3 target)
+    {
+        StartCoroutine(Movement(target));
+
+    }
+
     // Use this for initialization
     void Start () {
         sr = GetComponent<SpriteRenderer>();
         //SetDolColor(0);
 
-    }
+    }    
 
     void onSelectDol()
     {
+        if(Game.isOffLineMode==false)
+        {
+            if (Game.isMyTurn == false)
+                return;
+
+            if (mydolType == 1 && Game.isMyDolColorBlack == true)
+                return;
+
+            if (mydolType == 2 && Game.isMyDolColorBlack == false)
+                return;
+        }
+
+        /*
         if (Game.lastMovedDol != null)
         {
             if (Game.lastMovedDol.name == this.name)
@@ -32,11 +84,16 @@ public class PlayDol : MonoBehaviour {
                 Debug.Log(string.Format("DuplicatedBound - SelectedDol:{0}", this));
                 return;
             }
-        }
+        }*/
 
         Game.selectedDol = this;
         indicator.transform.position = transform.position;
         indicator.SetActive(true);
+
+
+        Dols.SetOffAllCanMove();
+        Dols.canMoveDolList(this);
+
         Debug.Log(string.Format("Bound - SelectedDol:{0}", this));
     }
 
@@ -70,13 +127,12 @@ public class PlayDol : MonoBehaviour {
             moveInfoReq.target.setPos(Game.targetDol.dolPos);
 
             Game.send(moveInfoReq.ToString());
-
             Game.selectedDol = null;
             Game.targetDol = null;
+
+            Dols.SetOffAllCanMove();
             indicator.SetActive(false);
-
         }
-
     }
 
     void CheckMouse(int mouseEvt=1)
@@ -97,20 +153,18 @@ public class PlayDol : MonoBehaviour {
                 if (mydolType > 0)
                 {
                     onSelectDol();
-
                 }
 
                 if (mydolType == 0)
                 {
                     onSelectTarget();                    
                 }
-                onMoveDol();
-                
+                onMoveDol();                
             }
 
             if (mouseEvt == 1)
             {
-                onRemoveDol();                
+                onRemoveDol();
             }            
         }
 
@@ -119,6 +173,26 @@ public class PlayDol : MonoBehaviour {
     public int GetMyDolType()
     {
         return mydolType;
+    }
+
+    public void SetOnCanMove()
+    {
+        if(mydolType ==0)
+        {
+            sr = GetComponent<SpriteRenderer>();
+            sr.sprite = canPoint;
+            isCanMove = true;
+        }
+    }
+
+    public void SetOffCanMove()
+    {
+        if (mydolType == 0)
+        {
+            sr = GetComponent<SpriteRenderer>();
+            sr.sprite = emtypDol;
+            isCanMove = false;
+        }
     }
 
     public void SetDolColor(int dolType)

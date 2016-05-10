@@ -23,8 +23,9 @@ namespace serverApp
         }
 
         protected override void OnOpen()
-        {            
-            
+        {
+            ServerLog.writeLog(string.Format("OnOpen GamePlayer:{0}", ID));
+
         }
 
         protected override void OnError(ErrorEventArgs e)

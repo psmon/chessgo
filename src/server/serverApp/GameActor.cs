@@ -46,12 +46,36 @@ namespace serverApp
             }            
         }
         
+        public void sendTurnInfo()
+        {
+            var turnInfo = new TurnInfo();
+            
+            if (isNowPlayerBlack == false)
+            {
+                turnInfo.isBlack = false;
+                turnInfo.isMe = true;
+                whitePlayer.sendData("TurnInfo", turnInfo);
+                turnInfo.isMe = false;
+                blackPlayer.sendData("TurnInfo", turnInfo);
+            }
+            else
+            {
+                turnInfo.isBlack = true;
+                turnInfo.isMe = true;
+                blackPlayer.sendData("TurnInfo", turnInfo);
+                turnInfo.isMe = false;
+                whitePlayer.sendData("TurnInfo", turnInfo);
+            }
+        }
+
         public void prePareGame()
         {
             ServerLog.writeLog(string.Format("startGame:{0}", tableInfo.gameNo));
             var whiteDolInfo = whitePlayer.dolsInfo;
             var blackDolInfo = blackPlayer.dolsInfo;
 
+            isNowPlayerBlack = false;
+            
             //send white
             whiteDolInfo.isMe = true;
             whitePlayer.sendData("DolsInfo", whiteDolInfo);
@@ -67,8 +91,7 @@ namespace serverApp
             blackPlayer.sendData("DolsInfo", blackDolInfo);
 
             gameState = GameTableState.PLAYING;
-
-
+            sendTurnInfo();
         }
 
         public bool joinGame(GamePlayer gamePlayer)
@@ -90,7 +113,6 @@ namespace serverApp
                     whitePlayer = gamePlayer;
                 }
 
-
                 if (tableInfo.plyCount == 2)
                 {
                     if (lastLeavePlayer != null)
@@ -110,11 +132,9 @@ namespace serverApp
                     {
                         gamePlayer.createDolInfo(true);
                         blackPlayer = gamePlayer;
-                    }
-                    
+                    }                    
                     prePareGame();
-                }
-                                    
+                }                                    
                 ServerLog.writeLog(string.Format("joinGame {0} in GameNo:{1} plyCount:{2}", gamePlayer.ID, tableInfo.gameNo , tableInfo.plyCount ));
             }            
             return true;
@@ -134,6 +154,12 @@ namespace serverApp
                         lastLeavePlayer = gamePlayer;
                         break;
                     }
+                    else
+                    {
+                        CrashGameInfo crashinfo = new CrashGameInfo();
+                        crashinfo.reason = 0;
+                        idxPlayer.sendData("CrashGameInfo", crashinfo);
+                    }
                 }
             }
         }
@@ -145,7 +171,6 @@ namespace serverApp
                 whitePlayer.sendData(pid, sendObj);
                 blackPlayer.sendData(pid, sendObj);
             }
-
         }
 
         public void moveInfoReq(MoveInfoReq req, bool isBlack)
@@ -156,10 +181,8 @@ namespace serverApp
                 moveInfoRes.writeFromReqData(req);
                 sendAllData("MoveInfoRes", moveInfoRes);
                 isNowPlayerBlack = !isNowPlayerBlack;
-                
-            }
-
-        }
-                
+                sendTurnInfo();
+            }            
+        }                
     }
 }
