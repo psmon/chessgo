@@ -28,7 +28,7 @@ namespace serverApp
             foreach (int gameID in gameList.Keys)
             {
                 GameActor curGame = gameList[gameID];
-                if(curGame.getTableInfo().gameNo == gamePlayer.myGame.getTableInfo().gameNo)
+                if(curGame.getTableInfo().gameNo == gamePlayer.GetMyGameActor().getTableInfo().gameNo)
                 {
                     curGame.leaveGame(gamePlayer);
                 }                

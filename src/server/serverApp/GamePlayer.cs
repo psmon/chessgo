@@ -7,25 +7,36 @@ using System.Net;
 //using System.Windows;
 using System.Web.Script.Serialization;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace serverApp
 {
     public class GamePlayer : WebSocketBehavior
     {
-        public GameActor myGame;
+        protected GameActor myGame = null;
         protected string myDeviceID;
         public bool isBlack;
         public DolsInfo dolsInfo;
 
         public GamePlayer()
         {
-            
+            ServerLog.writeLog(string.Format("Creator GamePlayer:{0}", GetHashCode() ));
+
         }
 
         protected override void OnOpen()
         {
             ServerLog.writeLog(string.Format("OnOpen GamePlayer:{0}", ID));
 
+        }
+
+        public GameActor GetMyGameActor()
+        {
+            if (myGame == null)
+            {
+                ServerLog.writeLog(string.Format("myGame is null"));
+            }
+            return myGame;
         }
 
         protected override void OnError(ErrorEventArgs e)
@@ -87,8 +98,19 @@ namespace serverApp
                         MoveInfoReq moveInfo = new JavaScriptSerializer().ConvertToType<MoveInfoReq>(jsonObject);
                         myGame.moveInfoReq(moveInfo, isBlack);                        
                         break;
-                }                
-                                
+                    case "GameResultInfo":
+                        GameResultInfo gameResult = new JavaScriptSerializer().ConvertToType<GameResultInfo>(jsonObject);
+                        if(gameResult.wiinnerIsme == true)
+                        {
+                            Task resultTask = new Task(() =>
+                            {
+                                Task.Delay(5000).Wait();
+                                myGame.prePareGame();
+                            });
+                            resultTask.Start();
+                        }
+                        break;
+                }                                                
             }
             catch(Exception ex)
             {
@@ -103,11 +125,11 @@ namespace serverApp
             Random rnd = new Random();
             isBlack = _isBlack;
 
-            int[] dolsarray = new int[] { 0,0,0,0,0,0,0,0,
-                                          0,0,0,0,0,0,0,0,
-                                          1,1,1,1,1,1,1,1 };
+            int[] dolsarray = new int[] { 1,0,1,0,1,0,1,0,
+                                          0,1,0,1,0,1,0,1,
+                                          0,0,0,0,0,0,0,0 };            
 
-            dolsarray = dolsarray.OrderBy(x => rnd.Next()).ToArray();
+            //dolsarray = dolsarray.OrderBy(x => rnd.Next()).ToArray();            
 
             result.writeForArray(dolsarray, _isBlack);
             dolsInfo = result;

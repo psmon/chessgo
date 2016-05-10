@@ -23,12 +23,16 @@ public class PlayDol : MonoBehaviour {
     public float moveTime = 0.1f;           //Time it will take object to move, in seconds.        
     private float inverseMoveTime;
 
+    public static bool isRunAnimation = false;
+
 
     protected System.Collections.IEnumerator Movement(Vector3 end)
     {
         //Calculate the remaining distance to move based on the square magnitude of the difference between current position and end parameter. 
         //Square magnitude is used instead of magnitude because it's computationally cheaper.
-        float sqrRemainingDistance = (transform.position - end).sqrMagnitude;        
+        float sqrRemainingDistance = (transform.position - end).sqrMagnitude;
+
+        isRunAnimation = true;
 
         //While that distance is greater than a very small amount (Epsilon, almost zero):
         while (sqrRemainingDistance > float.Epsilon)
@@ -43,6 +47,11 @@ public class PlayDol : MonoBehaviour {
 
             //Recalculate the remaining distance after moving.
             sqrRemainingDistance = (transform.position - end).sqrMagnitude;
+
+            if(sqrRemainingDistance <= 0)
+            {
+                isRunAnimation = false;
+            }
 
             //Return and loop until sqrRemainingDistance is close enough to zero to end the function
             yield return null;
@@ -101,8 +110,26 @@ public class PlayDol : MonoBehaviour {
     {
         if (Game.selectedDol != null)
         {
-            Game.targetDol = this;
-            Debug.Log(string.Format("Bound - Taeget:{0}", this));
+            bool canMove = false;
+            foreach(PlayDol chkDol in Dols.canMoveDolList(Game.selectedDol , true))
+            {
+                if (chkDol == null)
+                    continue;
+
+                if( chkDol.GetDolPos().x == this.GetDolPos().x  && chkDol.GetDolPos().y == this.GetDolPos().y)
+                {
+                    canMove = true;
+                    break;
+                }
+
+            }
+            if (canMove == true)
+            {
+                Game.targetDol = this;
+                Debug.Log(string.Format("Bound - Taeget:{0}", this));
+
+            }
+            
         }
     }
 

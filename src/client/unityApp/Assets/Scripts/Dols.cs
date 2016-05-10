@@ -145,7 +145,7 @@ public class Dols : MonoBehaviour {
         }        
     }
 
-    public static List<PlayDol> canMoveDolList(PlayDol selectedDol)
+    public static List<PlayDol> canMoveDolList(PlayDol selectedDol, bool justGetData=false)
     {
         List<PlayDol> result = new List<PlayDol>();
         VectorDol selectPost =  selectedDol.GetDolPos();
@@ -161,7 +161,9 @@ public class Dols : MonoBehaviour {
             if(curDol.GetMyDolType() == 0)
             {
                 canMove = true;
-                curDol.SetOnCanMove();
+                if(justGetData==false)
+                    curDol.SetOnCanMove();
+
                 result.Add(curDol);
             }
             if (canMove == false)
@@ -179,7 +181,8 @@ public class Dols : MonoBehaviour {
             if (curDol.GetMyDolType() == 0)
             {
                 canMove = true;
-                curDol.SetOnCanMove();
+                if (justGetData == false)
+                    curDol.SetOnCanMove();
                 result.Add(curDol);
             }
             if (canMove == false)
@@ -198,7 +201,8 @@ public class Dols : MonoBehaviour {
             if (curDol.GetMyDolType() == 0)
             {
                 canMove = true;
-                curDol.SetOnCanMove();
+                if (justGetData == false)
+                    curDol.SetOnCanMove();
                 result.Add(curDol);
             }
 
@@ -218,7 +222,8 @@ public class Dols : MonoBehaviour {
             if (curDol.GetMyDolType() == 0)
             {
                 canMove = true;
-                curDol.SetOnCanMove();
+                if (justGetData == false)
+                    curDol.SetOnCanMove();
                 result.Add(curDol);
             }
 
@@ -230,7 +235,7 @@ public class Dols : MonoBehaviour {
     
 
     public static int checkGame(PlayDol selectedDol)
-    {
+    {        
         int score = 0;
         List<PlayDol> result = new List<PlayDol>();
         VectorDol selectPost = selectedDol.GetDolPos();

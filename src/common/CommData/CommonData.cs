@@ -108,7 +108,19 @@ namespace CommData
             for (int i=0; i<arrayData.Length; i++)
             {
                 int idx = i % 8;
-                int idy = _isBlack == true ? i / 8 + 5 : i / 8;
+                int idy = i / 8;
+
+                if (_isBlack)
+                {
+                    if (idy == 0)
+                        idy += 7;
+
+                    if (idy == 1)
+                        idy += 5;
+
+                    if (idy == 2)
+                        idy += 3;
+                }
                 
                 if (arrayData[i] > 0)
                 {                    
@@ -161,6 +173,16 @@ namespace CommData
         public int reason;        //0:다른유져 접속종료..
     }
 
+    [Serializable]
+    public class GameResultInfo : BaseWebData
+    {
+        public string pid = "GameResultInfo";
+        public int winnerColor; // 0 -Draw , 1-White , 2-Black
+        public bool wiinnerIsme;
+        public int wiinerScore;
+        public int loseScore;
 
+    }
+    
 }
 

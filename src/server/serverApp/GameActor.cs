@@ -19,7 +19,8 @@ namespace serverApp
 
         private GamePlayer blackPlayer = null;
         private GamePlayer whitePlayer = null;
-        private GamePlayer lastLeavePlayer = null;
+                
+        //private GamePlayer lastLeavePlayer = null;
 
         private bool isNowPlayerBlack;
 
@@ -109,29 +110,27 @@ namespace serverApp
 
                 if (tableInfo.plyCount == 1)
                 {
-                    gamePlayer.createDolInfo(false);
-                    whitePlayer = gamePlayer;
+                    
                 }
 
                 if (tableInfo.plyCount == 2)
                 {
-                    if (lastLeavePlayer != null)
+                    int idx = 0;
+                    foreach(GamePlayer player in gamePlayers)
                     {
-                        if (lastLeavePlayer.isBlack == false)
+                        if (idx == 0)
                         {
-                            gamePlayer.createDolInfo(false);
-                            whitePlayer = gamePlayer;
+                            player.createDolInfo(false);
+                            whitePlayer = player;
+
                         }
                         else
                         {
                             gamePlayer.createDolInfo(true);
                             blackPlayer = gamePlayer;
-                        }
-                    }
-                    else
-                    {
-                        gamePlayer.createDolInfo(true);
-                        blackPlayer = gamePlayer;
+
+                        }                        
+                        idx++;
                     }                    
                     prePareGame();
                 }                                    
@@ -150,8 +149,7 @@ namespace serverApp
                     {
                         gamePlayers.Remove(idxPlayer);
                         tableInfo.plyCount--;
-                        ServerLog.writeLog(string.Format("leaveGame {0} in GameNo:{1} plyCount:{2} isblack:{3}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount , gamePlayer.isBlack ));
-                        lastLeavePlayer = gamePlayer;
+                        ServerLog.writeLog(string.Format("leaveGame {0} in GameNo:{1} plyCount:{2} isblack:{3}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount , gamePlayer.isBlack ));                        
                         break;
                     }
                     else
