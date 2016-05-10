@@ -84,6 +84,15 @@ public class PlayDol : MonoBehaviour {
             if (mydolType == 2 && Game.isMyDolColorBlack == false)
                 return;
         }
+        else
+        {
+            if (mydolType == 1 && Game.isMyDolColorBlack == true)
+                return;
+
+            if (mydolType == 2 && Game.isMyDolColorBlack == false)
+                return;
+
+        }
 
         /*
         if (Game.lastMovedDol != null)
@@ -153,7 +162,31 @@ public class PlayDol : MonoBehaviour {
             moveInfoReq.source.setPos(Game.selectedDol.dolPos);
             moveInfoReq.target.setPos(Game.targetDol.dolPos);
 
-            Game.send(moveInfoReq.ToString());
+            if(Game.isOffLineMode==false)
+                Game.send(moveInfoReq.ToString());
+            else
+            {
+                MoveInfoRes moveInfoRes = new MoveInfoRes();
+                moveInfoRes.source.setPos(Game.selectedDol.dolPos);
+                moveInfoRes.target.setPos(Game.targetDol.dolPos);
+
+                Game.sendLocalData("MoveInfoRes", moveInfoRes.ToString() );
+
+                TurnInfo turnInfo = new TurnInfo();
+
+                if (Game.local_turn == Game.selectedDol.GetMyDolType())
+                    turnInfo.isMe = false;
+                else
+                    turnInfo.isMe = true;
+
+                turnInfo.isBlack = Game.selectedDol.GetMyDolType() == 1 ? true : false;
+                Game.sendLocalData("TurnInfo", turnInfo.ToString() );
+                Game.local_turn = Game.local_turn==2 ? 1 : 2;
+                Game.isMyDolColorBlack = Game.selectedDol.GetMyDolType() == 1 ? true : false;
+
+            }
+
+
             Game.selectedDol = null;
             Game.targetDol = null;
 

@@ -181,8 +181,15 @@ namespace CommData
         public bool wiinnerIsme;
         public int wiinerScore;
         public int loseScore;
+    }
+
+    [Serializable]
+    public class KeepAlive : BaseWebData
+    {
+        public string pid = "KeepAlive";
+        public int res;
 
     }
-    
+
 }
 

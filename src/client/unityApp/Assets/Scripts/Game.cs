@@ -4,6 +4,7 @@ using CommData;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using System;
+using System.Collections;
 
 public class Game : MonoBehaviour {
 
@@ -15,8 +16,8 @@ public class Game : MonoBehaviour {
     public static bool isMyTurn;
     public static bool isMyDolColorBlack;
     public static bool isOffLineMode = false;
-    private static WebSocket ws = new WebSocket("ws://192.168.0.30/GoGame");
-    protected Queue<string> packetList = new Queue<string>();
+    private static WebSocket ws = null;
+    private static Queue<string> packetList = new Queue<string>();
     protected Text txtServerState;
     protected Button btn_singGame;
     protected Button btn_pvpGame;
@@ -34,6 +35,13 @@ public class Game : MonoBehaviour {
     protected int myPlyScore = 0;
     protected int otherPlyScore = 0;
 
+    static public int local_turn = 1;
+
+    protected bool serverInit = false;
+
+    protected bool isNetworkPlay = false;
+    
+
     // Use this for initialization
     void Start()
     {
@@ -48,29 +56,16 @@ public class Game : MonoBehaviour {
         txtGameResult.enabled = false;
 
         btn_singGame = GameObject.Find("Btn_Single").GetComponent<Button>();
-        btn_singGame.enabled = false;
-        btn_pvpGame = GameObject.Find("Btn_Single").GetComponent<Button>();
-        btn_pvpGame.enabled = false;
+        
+        btn_pvpGame = GameObject.Find("Btn_Multi").GetComponent<Button>();
+        
         BtnHelp = GameObject.Find("BtnHelp").GetComponent<Button>();
-        btn_pvpGame.enabled = false;
-
+        
 
         //btn_singGame.onClick.AddListener(delegate { test("test"); });
-
-        txtServerState.text = "try Conecting";
-        deviceId = SystemInfo.deviceUniqueIdentifier;        
-        Debug.Log("GameStart");        
-        ws.OnMessage += Ws_OnMessage;
-        ws.OnError += Ws_OnError;
-        ws.OnOpen += Ws_OnOpen;
-        ws.OnClose += Ws_OnClose;        
-
-        if (Game.isOffLineMode == false)
-        {
-            ws.Connect();
-        }
-        Debug.Log("Client Start");
+        
     }
+    
 
     void showResult(string text , bool isVisible)
     {
@@ -78,23 +73,75 @@ public class Game : MonoBehaviour {
         txtGameResult.enabled = isVisible;
         txtGameResult.text = text;
     }
-
+    
     void OnApplicationQuit()
     {
-        ws.Close();
+        if(ws!=null)
+            ws.Close();        
         Debug.Log("Application ending after " + Time.time + " seconds");
+    }
+
+    public void startLocalGame()
+    {
+        dols.CleanDols();
+        dols.offLineInit();
+        TurnInfo turnInfo = new TurnInfo();
+        turnInfo.isMe = true;
+        turnInfo.isBlack = false;
+        local_turn = 1;
+        sendLocalData("TurnInfo", turnInfo.ToString());
     }
 
     public void onStartGame_Single()
     {
+        if (isNetworkPlay)
+            return;
+
         Debug.Log("onStartGame_Single");
+        Game.isOffLineMode = true;
+        startLocalGame();
+
     }
 
     public void onStartGame_PVP()
     {
+        if (isNetworkPlay)
+            return;
+
+        Debug.Log("onStartGame_PVP");
+        dols.CleanDols();
+        onStageInit();
+        Game.isOffLineMode = false;
+        txtServerState.text = "try Conecting";
+        deviceId = SystemInfo.deviceUniqueIdentifier;
+        Debug.Log("GameStart");
+
+        if (ws != null)
+        {
+            ws.Close();
+            ws = null;
+        }
+
+        if (ws == null)
+        {
+            ws = new WebSocket("ws://192.168.0.30/GoGame");
+            ws.OnMessage += Ws_OnMessage;
+            ws.OnError += Ws_OnError;
+            ws.OnOpen += Ws_OnOpen;
+            ws.OnClose += Ws_OnClose;
+        }
+                
+        ws.Connect();
+        Debug.Log("Client Start");
+
+        serverInit = true;
+    }
+
+    public void onGameHelp()
+    {
         Debug.Log("onStartGame_PVP");
     }
-    
+
     public void onStageInit()
     {
         myPlyScore = 0;
@@ -169,15 +216,17 @@ public class Game : MonoBehaviour {
             case "Disconnected":
                 dols.CleanDols();
                 txtServerState.text = "Disconneted Server-You Nedd Restat Application";
-                Application.Quit();
+                isNetworkPlay = false;
+                //Application.Quit();
                 break;
             case "LoginInfoRes":
                 LoginInfoRes loginRes = new LoginInfoRes();
                 loginRes.FromJsonOverwrite(jsonObject.data);
                 Debug.Log("LoginInfoRes: " + loginRes.ToString());
-                txtServerState.text = "Wair for Other Player";
+                txtServerState.text = "Wait for MultiPlayer(You Can run SingleGame at waiting)";
                 break;
             case "DolsInfo":
+                isOffLineMode = false;
                 DolsInfo dolsinfo = new DolsInfo();
                 dolsinfo.FromJsonOverwrite(jsonObject.data);
                 Debug.Log("DolsInfo: " + dolsinfo.ToString());
@@ -193,6 +242,7 @@ public class Game : MonoBehaviour {
                     dols.CleanDols();
                     dols.InitDols();
                 }
+                isNetworkPlay = true;
 
                 onStageInit();                
                 break;
@@ -220,36 +270,71 @@ public class Game : MonoBehaviour {
                     isMyDolColorBlack = !turnInfo.isBlack;
 
                 }
+                
+                if (isOffLineMode)
+                {
+                    isMyDolColorBlack = turnInfo.isBlack;
+                    txtTurnInfo = string.Format("{0} Turn", currentDolColor);
+
+                }
+                
                 txtServerState.text = txtTurnInfo;
                 break;
             case "CrashGameInfo":
                 dols.CleanDols();
                 txtServerState.text = "Other User Leaver, Wait Other Player";
+                isNetworkPlay = false;
                 break;
-            case "CheckGame":                                
-                if(isMyDolColorBlack==true && curPlayDol.GetMyDolType() == 2)
+            case "CheckGame":
+                if (isOffLineMode == false)
                 {
-                    myPlyScore += Dols.checkGame(curPlayDol);
-                }
+                    if (isMyDolColorBlack == true && curPlayDol.GetMyDolType() == 2)
+                    {
+                        myPlyScore += Dols.checkGame(curPlayDol);
+                    }
 
-                if (isMyDolColorBlack == true && curPlayDol.GetMyDolType() == 1)
-                {
-                    otherPlyScore += Dols.checkGame(curPlayDol);
-                }
+                    if (isMyDolColorBlack == true && curPlayDol.GetMyDolType() == 1)
+                    {
+                        otherPlyScore += Dols.checkGame(curPlayDol);
+                    }
 
-                if (isMyDolColorBlack == false && curPlayDol.GetMyDolType() == 1)
-                {
-                    myPlyScore += Dols.checkGame(curPlayDol);
-                }
+                    if (isMyDolColorBlack == false && curPlayDol.GetMyDolType() == 1)
+                    {
+                        myPlyScore += Dols.checkGame(curPlayDol);
+                    }
 
-                if (isMyDolColorBlack == false && curPlayDol.GetMyDolType() == 2)
+                    if (isMyDolColorBlack == false && curPlayDol.GetMyDolType() == 2)
+                    {
+                        otherPlyScore += Dols.checkGame(curPlayDol);
+                    }
+
+                }    
+                else
                 {
-                    otherPlyScore += Dols.checkGame(curPlayDol);
+                    if( curPlayDol.GetMyDolType() == 1)
+                    {
+                        myPlyScore += Dols.checkGame(curPlayDol);
+                    }
+                    else
+                    {
+                        otherPlyScore += Dols.checkGame(curPlayDol);
+                    }
+
                 }
                 
-                txtMyPlyScore.text = "MyScore:" + myPlyScore;
-                txtOtherPlayScore.text = "EnemyScore:" + otherPlyScore;
+                if (isOffLineMode == false)
+                {
+                    txtMyPlyScore.text = "MyScore:" + myPlyScore;
+                    txtOtherPlayScore.text = "EnemyScore:" + otherPlyScore;
+                }
+                else
+                {
+                    txtMyPlyScore.text = "WhiteScore:" + myPlyScore;
+                    txtOtherPlayScore.text = "BlackScore:" + otherPlyScore;
+                }
 
+
+                
                 GameResultInfo gameResultInfo = new GameResultInfo();
                 if (myPlyScore > 4)
                 {
@@ -257,8 +342,17 @@ public class Game : MonoBehaviour {
                     gameResultInfo.wiinerScore = myPlyScore;
                     gameResultInfo.loseScore = otherPlyScore;
                     gameResultInfo.wiinnerIsme = true;
-                    showResult("You Win", true);
-                    ws.Send(gameResultInfo.ToString());
+
+                    if (isOffLineMode == false)
+                    {
+                        showResult("You Win", true);
+                        ws.Send(gameResultInfo.ToString());
+                    }
+                    else
+                    {
+                        showResult("White Win", true);
+
+                    }                    
                 }
 
                 if (otherPlyScore > 4)
@@ -267,8 +361,18 @@ public class Game : MonoBehaviour {
                     gameResultInfo.wiinerScore = otherPlyScore;
                     gameResultInfo.loseScore = myPlyScore;
                     gameResultInfo.wiinnerIsme = false;
-                    showResult("You Lose", true);
-                    ws.Send(gameResultInfo.ToString());
+
+                    if (isOffLineMode == false)
+                    {
+                        showResult("You Lose", true);
+                        ws.Send(gameResultInfo.ToString());
+                    }
+                    else
+                    {
+                        showResult("Black Win", true);
+
+                    }
+                    
                 }                
                 break;
         }
@@ -287,14 +391,7 @@ public class Game : MonoBehaviour {
         yield return new WaitForSeconds(time);
         callback();
     }
-
-    private void Ws_OnClose(object sender, CloseEventArgs e)
-    {
-        WebDataRes closeMsg = new WebDataRes();
-        closeMsg.pid = "Disconnected";
-        packetList.Enqueue(closeMsg.ToString() );        
-    }
-
+    
     private void Ws_OnOpen(object sender, System.EventArgs e)
     {
         /*
@@ -308,6 +405,13 @@ public class Game : MonoBehaviour {
 
     }
 
+    private void Ws_OnClose(object sender, CloseEventArgs e)
+    {
+        WebDataRes closeMsg = new WebDataRes();
+        closeMsg.pid = "Disconnected";
+        packetList.Enqueue(closeMsg.ToString());
+    }
+
     private void Ws_OnError(object sender, ErrorEventArgs e)
     {
         Debug.Log(e.Message);
@@ -315,6 +419,7 @@ public class Game : MonoBehaviour {
         closeMsg.pid = "Disconnected";
         packetList.Enqueue(closeMsg.ToString());
     }
+    
 
     // Update is called once per frame
     void Update ()
@@ -324,5 +429,13 @@ public class Game : MonoBehaviour {
 
         ProcessPackets();
     }
-    
+
+    public static void sendLocalData(string pid, string data)
+    {
+        WebDataRes sendData = new WebDataRes();
+        sendData.pid = pid;
+        sendData.data = data;
+        packetList.Enqueue(sendData.ToString());
+    }
+
 }

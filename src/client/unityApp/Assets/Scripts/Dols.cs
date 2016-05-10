@@ -33,7 +33,7 @@ public class Dols : MonoBehaviour {
         Game.dols = this;
     }
 
-    void offLineInit()
+    public void offLineInit()
     {
         firstBplayDols = new DolsInfo();
         firstBplayDols.isBlack = true;
@@ -52,7 +52,7 @@ public class Dols : MonoBehaviour {
 
             addData = new VectorDol();
             addData.x = i;
-            addData.y = 0 + i%5;
+            addData.y = 0;
             firstWplayDols.list.Add(addData);
         }        
 

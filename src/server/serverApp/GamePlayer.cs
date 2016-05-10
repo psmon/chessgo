@@ -8,6 +8,7 @@ using System.Net;
 using System.Web.Script.Serialization;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace serverApp
 {
@@ -17,16 +18,26 @@ namespace serverApp
         protected string myDeviceID;
         public bool isBlack;
         public DolsInfo dolsInfo;
+        protected Timer timer = new Timer(15000);
 
         public GamePlayer()
-        {
+        {            
+            timer.Elapsed += Timer_Elapsed;
             ServerLog.writeLog(string.Format("Creator GamePlayer:{0}", GetHashCode() ));
 
+        }
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            KeepAlive keepAlive = new KeepAlive();
+            sendData("KeepAlive", keepAlive);
+            ServerLog.writeLog("Ping..{0}"+ID);
         }
 
         protected override void OnOpen()
         {
             ServerLog.writeLog(string.Format("OnOpen GamePlayer:{0}", ID));
+            timer.Start();
 
         }
 
@@ -43,6 +54,7 @@ namespace serverApp
         {
             if (myGame != null)
             {
+                timer.Stop();
                 ServerApp.getGameTableActor().leaveGame(this);
                 myGame = null;
             }
@@ -54,6 +66,7 @@ namespace serverApp
         {
             if (myGame != null)
             {
+                timer.Stop();
                 ServerApp.getGameTableActor().leaveGame(this);
                 myGame = null;
             }
