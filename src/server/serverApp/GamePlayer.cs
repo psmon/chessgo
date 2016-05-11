@@ -23,8 +23,7 @@ namespace serverApp
         public GamePlayer()
         {            
             timer.Elapsed += Timer_Elapsed;
-            ServerLog.writeLog(string.Format("Creator GamePlayer:{0}", GetHashCode() ));
-
+            ServerLog.writeLog(string.Format("Creator GamePlayer:{0}", GetHashCode() ));            
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -105,8 +104,7 @@ namespace serverApp
                         }                        
                         sendData("LoginInfoRes", loginRes);                        
                         break;
-                    case "QuickSeatReq":
-                        
+                    case "QuickSeatReq":                        
                         myGame = ServerApp.getGameTableActor().quickJoin(this);
                         break;
                     case "MoveInfoReq":

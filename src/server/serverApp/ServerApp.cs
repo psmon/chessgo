@@ -23,11 +23,12 @@ namespace serverApp
 
         public static void runServer()
         {
-            string listenUrl = "ws://192.168.0.30";
-            var wssv = new WebSocketServer(listenUrl);
-            ServerLog.writeLog(string.Format("ServerStart:{0}", listenUrl));
+
+            var wssv = new WebSocketServer(9100);
+            
+            ServerLog.writeLog(string.Format("ServerStart:{0}", 9100));
             wssv.Start();
-            wssv.AddWebSocketService<GamePlayer>("/GoGame");
+            wssv.AddWebSocketService<GamePlayer>("/GoGame");            
             Console.ReadKey(true);
             wssv.Stop();
         }

@@ -15,7 +15,7 @@ namespace serverApp
         public GameTableActor()
         {
             //Todo : dummy Data to atg
-            for(int gameNo = 0; gameNo < 10; gameNo++)
+            for(int gameNo = 0; gameNo < 50; gameNo++)
             {
                 GameActor game = new GameActor();
                 game.createGameTable(gameNo);

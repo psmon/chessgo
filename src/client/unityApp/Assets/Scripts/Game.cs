@@ -131,7 +131,15 @@ public class Game : MonoBehaviour {
 
         if (ws == null)
         {
-            ws = new WebSocket("ws://192.168.0.30/GoGame");
+            if (Debug.isDebugBuild)
+            {
+                ws = new WebSocket("ws://192.168.0.30:9100/GoGame");
+            }
+            else
+            {
+                ws = new WebSocket("ws://psmon.iptime.org:9100/GoGame");
+            }
+            
             ws.OnMessage += Ws_OnMessage;
             ws.OnError += Ws_OnError;
             ws.OnOpen += Ws_OnOpen;
@@ -206,7 +214,6 @@ public class Game : MonoBehaviour {
             {
                 curWsData = packetList.Dequeue();
             }
-
         }
 
         if (curWsData.Length < 1)
@@ -225,7 +232,8 @@ public class Game : MonoBehaviour {
                 break;
             case "Disconnected":
                 dols.CleanDols();
-                txtServerState.text = "Disconneted Server-You Nedd Restat Application";
+                isNetworkPlay = true;
+                txtServerState.text = "Disconneted Server";
                 isNetworkPlay = false;
                 //Application.Quit();
                 break;
@@ -287,7 +295,6 @@ public class Game : MonoBehaviour {
                 {
                     isMyDolColorBlack = turnInfo.isBlack;
                     txtTurnInfo = string.Format("{0} Turn", currentDolColor);
-
                 }
                 
                 txtServerState.text = txtTurnInfo;
