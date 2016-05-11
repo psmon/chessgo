@@ -29,7 +29,9 @@ public class Game : MonoBehaviour {
     protected Text txtMyPlyScore;
     protected Text txtOtherPlayScore;
     protected Text txtGameResult;
-
+    protected Text txtTotalRemainTime;
+    protected Text txtPrivateTime;
+    
     protected Image panelResult;
 
     protected Image pannelHelp;
@@ -45,6 +47,11 @@ public class Game : MonoBehaviour {
 
     protected bool isNetworkPlay = false;
     
+    protected GameInfo gameInfo = new GameInfo();
+    protected float globalTimeLeft = 30.0f;
+    protected float privateTimeLeft = 30.0f;
+
+
 
     // Use this for initialization
     void Start()
@@ -58,6 +65,9 @@ public class Game : MonoBehaviour {
 
         pannelHelp = GameObject.Find("pannelHelp").GetComponent<Image>();
         txtHelp = GameObject.Find("txtHelp").GetComponent<Text>();
+
+        txtTotalRemainTime = GameObject.Find("txtTotalRemainTime").GetComponent<Text>();
+        txtPrivateTime = GameObject.Find("txtPrivateTime").GetComponent<Text>();
 
         panelResult.enabled = false;
         txtGameResult.enabled = false;
@@ -227,6 +237,12 @@ public class Game : MonoBehaviour {
             case "Connected":
                 LoginInfo loginInfo = new LoginInfo();
                 loginInfo.deviceId = deviceId;
+                if (Debug.isDebugBuild)
+                {
+                    System.Random rnd = new System.Random();
+                    int random = rnd.Next(1, 1000);
+                    loginInfo.deviceId = deviceId + random;
+                }
                 ws.Send(loginInfo.ToString());
                 txtServerState.text = "Conneted Server";
                 break;
@@ -242,11 +258,25 @@ public class Game : MonoBehaviour {
                 LoginInfoRes loginRes = new LoginInfoRes();
                 loginRes.FromJsonOverwrite(jsonObject.data);
                 Debug.Log("LoginInfoRes: " + loginRes.ToString());
-                txtServerState.text = "Wait for MultiPlayer(You Can run SingleGame at waiting)";
-                QuickSeatReq quickSeat = new QuickSeatReq();
-                ws.Send(quickSeat.ToString() );
+                if (loginRes.loginResult > 0)
+                {
+                    txtServerState.text = "Wait for MultiPlayer(You Can run SingleGame at waiting)";
+                    QuickSeatReq quickSeat = new QuickSeatReq();
+                    ws.Send(quickSeat.ToString());
+                }
+                else
+                {
+                    txtServerState.text = "Login Failed...";
+                }                
+                break;
+            case "GameInfo":
+                GameInfo gameInfoRes = new GameInfo();                
+                gameInfoRes.FromJsonOverwrite(jsonObject.data);
+                gameInfo = gameInfoRes;
+                globalTimeLeft = (float)gameInfoRes.totalTimeBank;                
                 break;
             case "DolsInfo":
+                globalTimeLeft = (float)gameInfo.totalTimeBank;
                 isOffLineMode = false;
                 isNetworkPlay = true;
                 DolsInfo dolsinfo = new DolsInfo();
@@ -282,13 +312,14 @@ public class Game : MonoBehaviour {
                     txtTurnInfo = string.Format("Your({0}) turn", currentDolColor)  ;
                     isMyTurn = true;
                     isMyDolColorBlack = turnInfo.isBlack;
+                    privateTimeLeft = gameInfo.privateTimeBank; 
                 }
                 else
                 {
                     txtTurnInfo = string.Format("Wait other player({0}) Action", currentDolColor);
                     isMyTurn = false;
                     isMyDolColorBlack = !turnInfo.isBlack;
-
+                    privateTimeLeft = gameInfo.privateTimeBank;
                 }
                 
                 if (isOffLineMode)
@@ -344,18 +375,16 @@ public class Game : MonoBehaviour {
                 if (isOffLineMode == false)
                 {
                     txtMyPlyScore.text = "MyScore:" + myPlyScore;
-                    txtOtherPlayScore.text = "EnemyScore:" + otherPlyScore;
+                    txtOtherPlayScore.text = "HeScore:" + otherPlyScore;
                 }
                 else
                 {
                     txtMyPlyScore.text = "WhiteScore:" + myPlyScore;
                     txtOtherPlayScore.text = "BlackScore:" + otherPlyScore;
                 }
-
-
                 
                 GameResultInfo gameResultInfo = new GameResultInfo();
-                if (myPlyScore > 4)
+                if (myPlyScore > gameInfo.winScore-1 )
                 {
                     gameResultInfo.winnerColor = curPlayDol.GetMyDolType();
                     gameResultInfo.wiinerScore = myPlyScore;
@@ -374,7 +403,7 @@ public class Game : MonoBehaviour {
                     }                    
                 }
 
-                if (otherPlyScore > 4)
+                if (otherPlyScore > gameInfo.winScore - 1 )
                 {
                     gameResultInfo.winnerColor = curPlayDol.GetMyDolType();
                     gameResultInfo.wiinerScore = otherPlyScore;
@@ -390,8 +419,7 @@ public class Game : MonoBehaviour {
                     {
                         showResult("Black Win", true);
 
-                    }
-                    
+                    }                    
                 }                
                 break;
         }
@@ -438,15 +466,109 @@ public class Game : MonoBehaviour {
         closeMsg.pid = "Disconnected";
         packetList.Enqueue(closeMsg.ToString());
     }
-    
 
-    // Update is called once per frame
-    void Update ()
+    void FixedUpdate()
     {
         if (PlayDol.isRunAnimation == true)
             return;
 
+        if (isNetworkPlay && isOffLineMode == false)
+        {
+            if (globalTimeLeft < 0)
+            {
+                //GameOver();
+                if (isOffLineMode == false)
+                {
+
+                }
+
+                GameResultInfo gameResultInfo = new GameResultInfo();
+
+                if (myPlyScore > otherPlyScore)
+                {
+                    gameResultInfo.winnerColor = isMyDolColorBlack == true ? 2 : 1;
+                    gameResultInfo.wiinerScore = myPlyScore;
+                    gameResultInfo.loseScore = otherPlyScore;
+                    gameResultInfo.wiinnerIsme = true;
+                    showResult("You Win", true);
+                    ws.Send(gameResultInfo.ToString());
+                }
+                else if (myPlyScore < otherPlyScore)
+                {
+                    gameResultInfo.winnerColor = isMyDolColorBlack == true ? 1 : 2;
+                    gameResultInfo.wiinerScore = otherPlyScore;
+                    gameResultInfo.loseScore = myPlyScore;
+                    gameResultInfo.wiinnerIsme = false;
+                    showResult("You Lost", true);
+                    ws.Send(gameResultInfo.ToString());
+                }
+                else
+                {
+                    gameResultInfo.winnerColor = isMyDolColorBlack == true ? 2 : 1;
+                    gameResultInfo.wiinerScore = myPlyScore;
+                    gameResultInfo.loseScore = otherPlyScore;
+                    gameResultInfo.wiinnerIsme = true;
+                    showResult("Drawgame", true);
+                    ws.Send(gameResultInfo.ToString());
+                }
+
+                globalTimeLeft = gameInfo.totalTimeBank + 10;
+            }
+            else
+            {
+                globalTimeLeft -= Time.fixedDeltaTime;
+                txtTotalRemainTime.text = string.Format("RemainTime:{0}", (int)globalTimeLeft);
+            }
+
+            if (isMyTurn)
+            {
+                if (0 < privateTimeLeft)
+                {
+                    privateTimeLeft -= Time.fixedDeltaTime;
+                    txtPrivateTime.text = string.Format("You,Limit:{0}", (int)privateTimeLeft);
+                }
+                else
+                {
+                    if (Game.selectedDol != null)
+                    {
+                        Game.selectedDol.indicatorOff();
+                    }
+
+                    Game.selectedDol = null;
+                    Game.targetDol = null;
+                    Dols.SetOffAllCanMove();
+                    MoveInfoReq moveInfoReq = new MoveInfoReq();
+                    VectorDol nullPos = new VectorDol();
+                    nullPos.x = -1;
+                    moveInfoReq.source.setPos(nullPos);
+                    moveInfoReq.target.setPos(nullPos);
+                    send(moveInfoReq.ToString());
+                    privateTimeLeft = gameInfo.privateTimeBank;
+                }
+            }
+            else
+            {
+                if (0 < privateTimeLeft)
+                {
+                    privateTimeLeft -= Time.fixedDeltaTime;
+                    txtPrivateTime.text = string.Format("He,Limit:{0}", (int)privateTimeLeft);
+                }
+                else
+                {
+                    privateTimeLeft = gameInfo.privateTimeBank;
+
+                }
+            }
+        }
+
         ProcessPackets();
+
+    }
+
+    // Update is called once per frame
+    void Update ()
+    {
+
     }
 
     public static void sendLocalData(string pid, string data)

@@ -25,6 +25,10 @@ public class PlayDol : MonoBehaviour {
 
     public static bool isRunAnimation = false;
 
+    public void indicatorOff()
+    {
+        indicator.SetActive(false);
+    }
 
     protected System.Collections.IEnumerator Movement(Vector3 end)
     {

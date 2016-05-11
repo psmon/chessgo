@@ -102,7 +102,12 @@ namespace serverApp
                             myDeviceID = loginInfo.deviceId;
                             loginRes.loginResult = 1;
                         }                        
-                        sendData("LoginInfoRes", loginRes);                        
+                        sendData("LoginInfoRes", loginRes);
+                        if (loginRes.loginResult > 0)
+                        {
+                            GameInfo gameinfo = new GameInfo();
+                            sendData("GameInfo", gameinfo);
+                        }                        
                         break;
                     case "QuickSeatReq":                        
                         myGame = ServerApp.getGameTableActor().quickJoin(this);
@@ -138,9 +143,9 @@ namespace serverApp
             Random rnd = new Random();
             isBlack = _isBlack;
 
-            int[] dolsarray = new int[] { 1,0,1,0,1,0,1,0,
+            int[] dolsarray = new int[] { 1,0,0,0,1,0,0,0,
                                           0,1,0,1,0,1,0,1,
-                                          0,0,0,0,0,0,0,0 };            
+                                          0,0,1,0,0,0,1,0 };            
 
             //dolsarray = dolsarray.OrderBy(x => rnd.Next()).ToArray();            
 

@@ -135,6 +135,16 @@ namespace CommData
         }                
     }
 
+
+    [Serializable]
+    public class GameInfo : BaseWebData
+    {
+        public int totalTimeBank = 60 * 8;
+        public int privateTimeBank = 30;
+        public int winScore = 3;
+    }
+    
+
     [Serializable]
     public class MoveInfoReq : BaseWebData
     {

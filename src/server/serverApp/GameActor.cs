@@ -152,14 +152,13 @@ namespace serverApp
         {
             lock (this)
             {
+                List<GamePlayer> removeList = new List<GamePlayer>();
                 foreach(GamePlayer idxPlayer in gamePlayers)
                 {
                     if(gamePlayer.myDeviceID == idxPlayer.myDeviceID)
-                    {
-                        gamePlayers.Remove(idxPlayer);
-                        tableInfo.plyCount--;
-                        ServerLog.writeLog(string.Format("leaveGame {0} in GameNo:{1} plyCount:{2} isblack:{3}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount , gamePlayer.isBlack ));                        
-                        break;
+                    {                        
+                        removeList.Add(gamePlayer);                        
+                        ServerLog.writeLog(string.Format("leaveGame {0} in GameNo:{1} plyCount:{2} isblack:{3}", gamePlayer.ID, tableInfo.gameNo, tableInfo.plyCount , gamePlayer.isBlack ));
                     }
                     else
                     {
@@ -168,6 +167,12 @@ namespace serverApp
                         idxPlayer.sendData("CrashGameInfo", crashinfo);
                     }
                 }
+
+                foreach(GamePlayer removeply in removeList)
+                {
+                    gamePlayers.Remove(removeply);
+                    tableInfo.plyCount--;
+                }                
             }
         }
         
@@ -186,7 +191,11 @@ namespace serverApp
             {
                 MoveInfoRes moveInfoRes = new MoveInfoRes();
                 moveInfoRes.writeFromReqData(req);
-                sendAllData("MoveInfoRes", moveInfoRes);
+
+                if(req.source.x != -1)
+                {
+                    sendAllData("MoveInfoRes", moveInfoRes);
+                }                
                 isNowPlayerBlack = !isNowPlayerBlack;
                 sendTurnInfo();
             }            
