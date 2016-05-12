@@ -58,7 +58,8 @@ namespace CommData
     {
         public string pid = "LoginInfo";
         public string deviceId;
-    }
+        public string nickName;        
+    }    
 
     [Serializable]
     public class LoginInfoRes : BaseWebData
@@ -100,7 +101,8 @@ namespace CommData
         public bool isBlack;
         public bool isMe;
         public List<VectorDol> list =  new List<VectorDol>();
-        
+        public string nickName;
+
         public void writeForArray(int[] arrayData,bool _isBlack)
         {
             isBlack = _isBlack;

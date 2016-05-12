@@ -16,6 +16,7 @@ namespace serverApp
     {
         protected GameActor myGame = null;
         public string myDeviceID;
+        public string myNickName;
         public bool isBlack;
         public DolsInfo dolsInfo;
         protected Timer timer = new Timer(15000);
@@ -100,6 +101,7 @@ namespace serverApp
                         if (loginInfo.deviceId.Length > 10)
                         {
                             myDeviceID = loginInfo.deviceId;
+                            myNickName = loginInfo.nickName;
                             loginRes.loginResult = 1;
                         }                        
                         sendData("LoginInfoRes", loginRes);
@@ -137,7 +139,7 @@ namespace serverApp
             
         }
 
-        public DolsInfo createDolInfo(bool _isBlack)
+        public DolsInfo createDolInfo(bool _isBlack , string nickName)
         {
             var result = new DolsInfo();
             Random rnd = new Random();
@@ -150,6 +152,7 @@ namespace serverApp
             //dolsarray = dolsarray.OrderBy(x => rnd.Next()).ToArray();            
 
             result.writeForArray(dolsarray, _isBlack);
+            result.nickName = nickName;
             dolsInfo = result;
             
             return result;

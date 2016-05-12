@@ -129,13 +129,13 @@ namespace serverApp
                     {
                         if (idx == 0)
                         {
-                            player.createDolInfo(false);
+                            player.createDolInfo(false, player.myNickName);
                             whitePlayer = player;
 
                         }
                         else
                         {
-                            gamePlayer.createDolInfo(true);
+                            gamePlayer.createDolInfo(true, player.myNickName);
                             blackPlayer = gamePlayer;
 
                         }                        

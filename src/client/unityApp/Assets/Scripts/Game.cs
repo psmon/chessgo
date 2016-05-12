@@ -22,18 +22,30 @@ public class Game : MonoBehaviour {
 
     protected Button btn_singGame;
     protected Button btn_pvpGame;
-    
+
+    protected SpriteRenderer img_offLine;
+    protected SpriteRenderer img_onLine;
     
     protected string deviceId;
 
     protected Text txtMyPlyScore;
     protected Text txtOtherPlayScore;
+    protected Text txtYour_name;
+    protected Text txtOtherName;
+
+
     protected Text txtGameResult;
     protected Text txtTotalRemainTime;
     protected Text txtPrivateTime;
+
+    protected Text txt_UserName;
+    protected Text Placeholder_UserName;
     
     protected Image panelResult;
+    protected Image panel_UserName;
 
+    protected Text txt_NetState;
+    
     protected Image pannelHelp;
     protected Text txtHelp;
     
@@ -51,6 +63,8 @@ public class Game : MonoBehaviour {
     protected float globalTimeLeft = 30.0f;
     protected float privateTimeLeft = 30.0f;
 
+    protected bool isConnected = false;
+
 
 
     // Use this for initialization
@@ -59,15 +73,33 @@ public class Game : MonoBehaviour {
         txtServerState = GameObject.Find("txt_serverstate").GetComponent<Text>();
         txtMyPlyScore = GameObject.Find("txtYourScore").GetComponent<Text>();
         txtOtherPlayScore = GameObject.Find("txtOtherScore").GetComponent<Text>();
+        txtYour_name = GameObject.Find("txtYour_name").GetComponent<Text>();
+        txtOtherName = GameObject.Find("txtOtherName").GetComponent<Text>();
 
         panelResult = GameObject.Find("panelResult").GetComponent<Image>();
         txtGameResult = GameObject.Find("txtGameResult").GetComponent<Text>();
 
         pannelHelp = GameObject.Find("pannelHelp").GetComponent<Image>();
         txtHelp = GameObject.Find("txtHelp").GetComponent<Text>();
+        pannelHelp.enabled = false;
+        txtHelp.enabled = false;
+
+
+        panel_UserName = GameObject.Find("Panel_UserName").GetComponent<Image>();
+        txt_UserName = GameObject.Find("txt_UserName").GetComponent<Text>();
+        Placeholder_UserName = GameObject.Find("Placeholder_UserName").GetComponent<Text>();
+
 
         txtTotalRemainTime = GameObject.Find("txtTotalRemainTime").GetComponent<Text>();
         txtPrivateTime = GameObject.Find("txtPrivateTime").GetComponent<Text>();
+
+        img_offLine = GameObject.Find("img_offLine").GetComponent<SpriteRenderer>();
+        img_onLine = GameObject.Find("img_onLine").GetComponent<SpriteRenderer>();        
+        img_onLine.enabled = false;
+
+        txt_NetState = GameObject.Find("txt_NetState").GetComponent<Text>();
+        setOnLine(false);
+        
 
         panelResult.enabled = false;
         txtGameResult.enabled = false;
@@ -75,11 +107,59 @@ public class Game : MonoBehaviour {
         btn_singGame = GameObject.Find("Btn_Single").GetComponent<Button>();
         
         btn_pvpGame = GameObject.Find("Btn_Multi").GetComponent<Button>();
-        
+
         //btn_singGame.onClick.AddListener(delegate { test("test"); });
-        
-    }
+        checkPlayName();
+    }    
     
+    void setOnLine(bool isOnLine)
+    {
+        if (isOnLine)
+        {
+            img_onLine.enabled = true;
+            img_offLine.enabled = false;
+            isConnected = true;
+            txt_NetState.text = "Stop PVP";
+        }
+        else
+        {
+            img_onLine.enabled = false;
+            img_offLine.enabled = true;
+            isConnected = false;
+            txt_NetState.text = "PVP\r\nNetWork";
+        }
+    }
+
+    void checkPlayName()
+    {
+        if( PlayerPrefs.GetString("playerName").Length==0 )
+        {
+            Debug.Log("Player Name Is None:" + PlayerPrefs.GetString("playerName"));
+            //panel_UserName.gro                        
+        }
+        else
+        {
+            Debug.Log("Player Name Is " + PlayerPrefs.GetString("playerName"));
+            //panel_UserName.enabled = false;
+            panel_UserName.gameObject.active = false;                
+        }
+    }
+
+    public void saveUserName()
+    {
+        Debug.Log("SaveName" + PlayerPrefs.GetString("playerName"));
+        if(txt_UserName.text.Length > 3)
+        {
+            PlayerPrefs.SetString("playerName", txt_UserName.text);
+            PlayerPrefs.Save();
+            panel_UserName.gameObject.active = false;
+        }
+        else
+        {
+            txtServerState.text = "Nick Name require at least 4 Lenght(English)";
+        }        
+    }
+
 
     void showResult(string text , bool isVisible)
     {
@@ -115,6 +195,8 @@ public class Game : MonoBehaviour {
 
         Debug.Log("onStartGame_Single");
         Game.isOffLineMode = true;
+        txtYour_name.text = "White";
+        txtOtherName.text = "Black";
         onStageInit();
         startLocalGame();
 
@@ -122,10 +204,23 @@ public class Game : MonoBehaviour {
 
     public void onStartGame_PVP()
     {
-        if (isNetworkPlay)
+        if (isConnected == true)
+        {                        
+            if (ws != null)
+            {
+                ws.Close();
+                ws = null;
+            }
+            setOnLine(false);
             return;
+        }            
+
+        setOnLine(true);
 
         Debug.Log("onStartGame_PVP");
+        txtYour_name.text = "MyScore";
+        txtOtherName.text = "Opponent";
+
         dols.CleanDols();
         onStageInit();
         Game.isOffLineMode = false;
@@ -164,7 +259,17 @@ public class Game : MonoBehaviour {
 
     public void onGameHelp()
     {
-        Debug.Log("onStartGame_PVP");
+        if (pannelHelp.enabled == false)
+        {
+            pannelHelp.enabled = true;
+            txtHelp.enabled = true;
+        }
+        else
+        {
+            pannelHelp.enabled = false;
+            txtHelp.enabled = false;
+
+        }        
     }
 
     public void onStageInit()
@@ -174,8 +279,10 @@ public class Game : MonoBehaviour {
 
         myPlyScore = 0;
         otherPlyScore = 0;
-        txtMyPlyScore.text = "MyScore:" + myPlyScore;
-        txtOtherPlayScore.text = "OtherScore:" + otherPlyScore;
+        txtMyPlyScore.text = myPlyScore.ToString();
+        txtOtherPlayScore.text = otherPlyScore.ToString();
+
+
         txtServerState.text = "Start Game";
         showResult("", false);
 
@@ -237,6 +344,7 @@ public class Game : MonoBehaviour {
             case "Connected":
                 LoginInfo loginInfo = new LoginInfo();
                 loginInfo.deviceId = deviceId;
+                loginInfo.nickName = PlayerPrefs.GetString("playerName");
                 if (Debug.isDebugBuild)
                 {
                     System.Random rnd = new System.Random();
@@ -245,12 +353,14 @@ public class Game : MonoBehaviour {
                 }
                 ws.Send(loginInfo.ToString());
                 txtServerState.text = "Conneted Server";
+                setOnLine(true);
                 break;
             case "Disconnected":
                 dols.CleanDols();
                 isNetworkPlay = true;
                 txtServerState.text = "Disconneted Server";
                 isNetworkPlay = false;
+                setOnLine(false);
                 //Application.Quit();
                 break;
             case "LoginInfoRes":
@@ -260,7 +370,7 @@ public class Game : MonoBehaviour {
                 Debug.Log("LoginInfoRes: " + loginRes.ToString());
                 if (loginRes.loginResult > 0)
                 {
-                    txtServerState.text = "Wait for MultiPlayer(You Can run SingleGame at waiting)";
+                    txtServerState.text = "Wait Opponent Player(You Can run PracticeMode during waiting)";
                     QuickSeatReq quickSeat = new QuickSeatReq();
                     ws.Send(quickSeat.ToString());
                 }
@@ -276,6 +386,7 @@ public class Game : MonoBehaviour {
                 globalTimeLeft = (float)gameInfoRes.totalTimeBank;                
                 break;
             case "DolsInfo":
+                setOnLine(true);
                 globalTimeLeft = (float)gameInfo.totalTimeBank;
                 isOffLineMode = false;
                 isNetworkPlay = true;
@@ -294,6 +405,20 @@ public class Game : MonoBehaviour {
                     dols.CleanDols();
                     dols.InitDols();
                 }
+
+                if (dolsinfo.nickName.Length > 0)
+                {
+                    if (dolsinfo.isMe)
+                    {
+                        txtYour_name.text = dolsinfo.nickName;
+                    }
+                    else
+                    {
+                        txtOtherName.text = dolsinfo.nickName;
+                    }
+
+                }
+                
                 onStageInit();                
                 break;
             case "MoveInfoRes":
@@ -374,13 +499,15 @@ public class Game : MonoBehaviour {
                 
                 if (isOffLineMode == false)
                 {
-                    txtMyPlyScore.text = "MyScore:" + myPlyScore;
-                    txtOtherPlayScore.text = "HeScore:" + otherPlyScore;
+                    txtMyPlyScore.text = myPlyScore.ToString();
+                    txtOtherPlayScore.text = otherPlyScore.ToString();                    
                 }
                 else
                 {
-                    txtMyPlyScore.text = "WhiteScore:" + myPlyScore;
-                    txtOtherPlayScore.text = "BlackScore:" + otherPlyScore;
+                    txtMyPlyScore.text = myPlyScore.ToString();
+                    txtOtherPlayScore.text = otherPlyScore.ToString();
+                    txtYour_name.text = "White";
+                    txtOtherName.text = "Black";
                 }
                 
                 GameResultInfo gameResultInfo = new GameResultInfo();
