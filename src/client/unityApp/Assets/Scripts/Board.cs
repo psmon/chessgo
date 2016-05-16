@@ -3,9 +3,7 @@
 
 public class Board : MonoBehaviour {
 
-    public Material mat;
-    
-
+    public Material mat;    
     private int colRowCount = 8;   //15x15
     static public int rectSize = 30;
     static public int marginLeft = 10;
@@ -16,10 +14,7 @@ public class Board : MonoBehaviour {
     {
 
     }
-
-
-
-
+    
     void Update()
     {
 

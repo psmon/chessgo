@@ -34,3 +34,7 @@ Icon?
 ehthumbs.db
 [Tt]humbs.db
 src/client/unityApp/bin/
+*.pdb
+src/server/serverApp/packages/
+src/server/serverApp/bin/
+src/common/CommData/bin/

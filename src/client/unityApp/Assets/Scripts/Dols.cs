@@ -145,6 +145,72 @@ public class Dols : MonoBehaviour {
         }        
     }
 
+    public void askAIAction(int dolType, ref PlayDol sourceDol, ref PlayDol targetDol)
+    {
+
+        List<PlayDol> canMoveList = new List<PlayDol>();
+
+        foreach (GameObject gameObj in allDols)
+        {
+            PlayDol pdol = gameObj.GetComponent<PlayDol>();
+
+            if(pdol.GetMyDolType() == dolType)
+            {
+                List<PlayDol> moveList = canMoveDolList(pdol, true);
+                if ( moveList.Count > 0)
+                {
+                    canMoveList.Add(pdol);                    
+                }
+            }            
+        }
+
+        System.Random breakRnd = new System.Random();
+        int brkrandom = breakRnd.Next(0, canMoveList.Count);
+        int addIdx = 0;
+        int canObtain = 0;
+
+        foreach (PlayDol aiDol in canMoveList)
+        {
+            List<PlayDol> moveList = canMoveDolList(aiDol, true);
+            System.Random rnd = new System.Random();
+            int random = rnd.Next(0, moveList.Count);
+            sourceDol = aiDol;
+            targetDol = moveList[random];
+            foreach (PlayDol moveDol in moveList)
+            {
+                if( 0 < checkGame(moveDol, true, aiDol.GetMyDolType()))
+                {
+                    targetDol = moveDol;
+                    return;
+                }
+            }            
+        }
+
+        foreach (PlayDol aiDol in canMoveList)
+        {
+            List<PlayDol> moveList = canMoveDolList(aiDol, true);
+            System.Random rnd = new System.Random();
+            int random = rnd.Next(0, moveList.Count);
+            sourceDol = aiDol;
+            targetDol = moveList[random];
+                        
+            foreach (PlayDol moveDol in moveList)
+            {
+                if (0 < checkGame(moveDol, true, aiDol.GetMyDolType()))
+                {
+                    targetDol = moveDol;
+                    return;
+                }
+            }
+
+            if (addIdx == brkrandom)
+                break;
+
+            addIdx++;
+        }
+        
+    }
+
     public static List<PlayDol> canMoveDolList(PlayDol selectedDol, bool justGetData=false)
     {
         List<PlayDol> result = new List<PlayDol>();
@@ -234,11 +300,13 @@ public class Dols : MonoBehaviour {
     }
     
 
-    public static int checkGame(PlayDol selectedDol)
-    {        
+    public static int checkGame(PlayDol selectedDol,bool isPreCheck = false, int chkDolType = 1 )
+    {
         int score = 0;
         List<PlayDol> result = new List<PlayDol>();
+
         VectorDol selectPost = selectedDol.GetDolPos();
+        int selDolType = isPreCheck == false ? selectedDol.GetMyDolType() : chkDolType;
 
         //LeftCechk...                
         List<PlayDol> removeDols = new List<PlayDol>();
@@ -253,23 +321,24 @@ public class Dols : MonoBehaviour {
 
             if(idx == selectPost.x - 1)
             {
-                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                if (curDol.GetMyDolType() == selDolType )
                     break;
             }
 
-            if(selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            if(selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
             }
 
-            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            if (selDolType == curDol.GetMyDolType())
             {
                 if (removeDols.Count > 0)
                 {
                     score += removeDols.Count;
                     foreach(PlayDol removedol in removeDols)
                     {
-                        removedol.SetDolColor(0);
+                        if(isPreCheck==false)
+                            removedol.SetDolColor(0);
                     }
                 }
                 break;
@@ -289,23 +358,24 @@ public class Dols : MonoBehaviour {
 
             if (idx == selectPost.x + 1)
             {
-                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                if (curDol.GetMyDolType() == selDolType )
                     break;
             }
 
-            if (selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            if (selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
             }
 
-            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            if (selDolType == curDol.GetMyDolType())
             {
                 if (removeDols.Count > 0)
                 {
                     score += removeDols.Count;
                     foreach (PlayDol removedol in removeDols)
                     {
-                        removedol.SetDolColor(0);
+                        if (isPreCheck == false)
+                            removedol.SetDolColor(0);
                     }
                 }
                 break;
@@ -326,23 +396,24 @@ public class Dols : MonoBehaviour {
 
             if (idy == selectPost.y + 1)
             {
-                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                if (curDol.GetMyDolType() == selDolType )
                     break;
             }
 
-            if (selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            if (selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
             }
 
-            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            if (selDolType == curDol.GetMyDolType())
             {
                 if (removeDols.Count > 0)
                 {
                     score += removeDols.Count;
                     foreach (PlayDol removedol in removeDols)
                     {
-                        removedol.SetDolColor(0);
+                        if (isPreCheck == false)
+                            removedol.SetDolColor(0);
                     }
                 }
                 break;
@@ -363,23 +434,24 @@ public class Dols : MonoBehaviour {
 
             if (idy == selectPost.y - 1)
             {
-                if (curDol.GetMyDolType() == selectedDol.GetMyDolType())
+                if (curDol.GetMyDolType() == selDolType )
                     break;
             }
 
-            if (selectedDol.GetMyDolType() != curDol.GetMyDolType())
+            if (selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
             }
 
-            if (selectedDol.GetMyDolType() == curDol.GetMyDolType())
+            if (selDolType == curDol.GetMyDolType())
             {
                 if (removeDols.Count > 0)
                 {
                     score += removeDols.Count;
                     foreach (PlayDol removedol in removeDols)
                     {
-                        removedol.SetDolColor(0);
+                        if (isPreCheck == false)
+                            removedol.SetDolColor(0);
                     }
                 }
                 break;

@@ -15,7 +15,13 @@ public class Game : MonoBehaviour {
     public static Dols    dols;
     public static bool isMyTurn;
     public static bool isMyDolColorBlack;
-    public static bool isOffLineMode = false;
+
+    public  static bool isOffLineMode = false;
+    public static bool isAIMode = false;
+    protected bool isConnected = false;    
+    protected bool isNetworkPlay = false;
+
+
     private static WebSocket ws = null;
     private static Queue<string> packetList = new Queue<string>();
     protected Text txtServerState;
@@ -56,17 +62,12 @@ public class Game : MonoBehaviour {
     static public int local_turn = 1;
 
     protected bool serverInit = false;
-
-    protected bool isNetworkPlay = false;
     
     protected GameInfo gameInfo = new GameInfo();
     protected float globalTimeLeft = 30.0f;
     protected float privateTimeLeft = 30.0f;
-
-    protected bool isConnected = false;
-
-
-
+    
+    
     // Use this for initialization
     void Start()
     {
@@ -188,10 +189,18 @@ public class Game : MonoBehaviour {
         sendLocalData("TurnInfo", turnInfo.ToString());
     }
 
+    public void onStartGame_AI()
+    {        
+        onStartGame_Single();
+        isAIMode = true;
+    }
+
     public void onStartGame_Single()
     {
         if (isNetworkPlay)
             return;
+
+        isAIMode = false;
 
         Debug.Log("onStartGame_Single");
         Game.isOffLineMode = true;
@@ -199,7 +208,6 @@ public class Game : MonoBehaviour {
         txtOtherName.text = "Black";
         onStageInit();
         startLocalGame();
-
     }
 
     public void onStartGame_PVP()
@@ -213,8 +221,9 @@ public class Game : MonoBehaviour {
             }
             setOnLine(false);
             return;
-        }            
+        }
 
+        isAIMode = false;
         setOnLine(true);
 
         Debug.Log("onStartGame_PVP");
@@ -416,9 +425,7 @@ public class Game : MonoBehaviour {
                     {
                         txtOtherName.text = dolsinfo.nickName;
                     }
-
-                }
-                
+                }                
                 onStageInit();                
                 break;
             case "MoveInfoRes":
@@ -431,7 +438,6 @@ public class Game : MonoBehaviour {
                 turnInfo.FromJsonOverwrite(jsonObject.data);
                 string txtTurnInfo = "";
                 string currentDolColor = turnInfo.isBlack == true ? "black" : "white";
-
                 if (turnInfo.isMe)
                 {
                     txtTurnInfo = string.Format("Your({0}) turn", currentDolColor)  ;
@@ -451,6 +457,31 @@ public class Game : MonoBehaviour {
                 {
                     isMyDolColorBlack = turnInfo.isBlack;
                     txtTurnInfo = string.Format("{0} Turn", currentDolColor);
+
+                    if (isAIMode)
+                    {
+                        if(turnInfo.isBlack == true)
+                        {
+                            //dols.doaskAIAction
+                            PlayDol sourceDol = null;
+                            PlayDol targetDol = null;
+                            dols.askAIAction(2, ref sourceDol, ref targetDol);
+
+                            MoveInfoRes moveInfoReq = new MoveInfoRes();
+                            moveInfoReq.source.setPos(sourceDol.GetDolPos());
+                            moveInfoReq.target.setPos(targetDol.GetDolPos());
+                            Debug.Log("AI:" + moveInfoReq.ToString());
+                            sendLocalData("MoveInfoRes", moveInfoReq.ToString());
+
+                            TurnInfo turnChange = new TurnInfo();
+                            turnChange.isMe = true;
+                            turnChange.isBlack = false;
+
+                            sendLocalData("TurnInfo", turnChange.ToString());
+
+                        }
+                    }
+
                 }
                 
                 txtServerState.text = txtTurnInfo;
