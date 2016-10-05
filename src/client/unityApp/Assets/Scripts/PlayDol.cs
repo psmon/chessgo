@@ -13,7 +13,7 @@ public class PlayDol : MonoBehaviour {
     public Camera myCamera;
 
     private SpriteRenderer sr;
-    private int mydolType = 0;
+    public int mydolType = 0;
     private Vector3 chkSize = new Vector3(0.6f, 0.6f, 0);
 
     private VectorDol dolPos = new VectorDol();

@@ -23,6 +23,8 @@ public class Dols : MonoBehaviour {
     private float firstY = -1.95f;
     private float dolGapX = 0.85f;
     private float dolGapY = 0.85f;
+    public static List<PlayDol> warnDols = new List<PlayDol>();
+
 
     // Use this for initialization
     void Start () {
@@ -149,6 +151,7 @@ public class Dols : MonoBehaviour {
     {
 
         List<PlayDol> canMoveList = new List<PlayDol>();
+        List<PlayDol> canMoveList2 = new List<PlayDol>();
 
         foreach (GameObject gameObj in allDols)
         {
@@ -164,11 +167,20 @@ public class Dols : MonoBehaviour {
             }            
         }
 
-        System.Random breakRnd = new System.Random();
-        int brkrandom = breakRnd.Next(0, canMoveList.Count);
-        int addIdx = 0;
-        int canObtain = 0;
+        foreach (GameObject gameObj in allDols)
+        {
+            PlayDol pdol = gameObj.GetComponent<PlayDol>();
 
+            if (pdol.GetMyDolType() != dolType && pdol.GetMyDolType()!=0)
+            {
+                List<PlayDol> moveList = canMoveDolList(pdol, true);
+                if (moveList.Count > 0)
+                {
+                    canMoveList2.Add(pdol);
+                }
+            }
+        }
+        
         foreach (PlayDol aiDol in canMoveList)
         {
             List<PlayDol> moveList = canMoveDolList(aiDol, true);
@@ -186,6 +198,47 @@ public class Dols : MonoBehaviour {
             }            
         }
 
+        //회피기능
+        foreach (PlayDol aiDol in canMoveList2)
+        {
+            List<PlayDol> moveList = canMoveDolList(aiDol, true);
+            List<PlayDol> warnDols = null;
+
+            foreach (PlayDol moveDol in moveList)
+            {
+                if (0 < checkGame(moveDol, true, aiDol.GetMyDolType() , ref warnDols))
+                {
+
+                    List<PlayDol> moveList2 = canMoveDolList(warnDols[0], true);
+
+                    PlayDol safeDol = null;
+                    foreach(PlayDol chkSafeDol in moveList2)
+                    {
+                        
+                        safeDol = chkSafeDol;
+
+                        if ( 0==checkGame(chkSafeDol,true,aiDol.GetMyDolType()))
+                        {                        
+                            break;
+                        }                        
+                    }
+                                        
+                    System.Random rnd = new System.Random();
+                    int random = rnd.Next(0, moveList2.Count);
+                    sourceDol = warnDols[0];
+                    targetDol = safeDol;
+                    Debug.Log("warn...move my pos");
+                    return;
+                }
+            }
+        }
+
+        System.Random breakRnd = new System.Random();
+        int brkrandom = breakRnd.Next(0, canMoveList.Count);
+        int addIdx = 0;
+        int canObtain = 0;
+
+        //Random
         foreach (PlayDol aiDol in canMoveList)
         {
             List<PlayDol> moveList = canMoveDolList(aiDol, true);
@@ -193,19 +246,12 @@ public class Dols : MonoBehaviour {
             int random = rnd.Next(0, moveList.Count);
             sourceDol = aiDol;
             targetDol = moveList[random];
-                        
-            foreach (PlayDol moveDol in moveList)
-            {
-                if (0 < checkGame(moveDol, true, aiDol.GetMyDolType()))
-                {
-                    targetDol = moveDol;
-                    return;
-                }
-            }
 
             if (addIdx == brkrandom)
-                break;
-
+            {
+                    break;
+            }
+            
             addIdx++;
         }
         
@@ -298,12 +344,18 @@ public class Dols : MonoBehaviour {
         }        
         return result;
     }
-    
+    public static int checkGame(PlayDol selectedDol, bool isPreCheck , int chkDolType , ref List<PlayDol> warnDolss)
+    {       
+        int result =  checkGame(selectedDol, isPreCheck, chkDolType);
+        warnDolss = warnDols;
+        return result;
+    }
 
     public static int checkGame(PlayDol selectedDol,bool isPreCheck = false, int chkDolType = 1 )
     {
         int score = 0;
         List<PlayDol> result = new List<PlayDol>();
+        warnDols = new List<PlayDol>();
 
         VectorDol selectPost = selectedDol.GetDolPos();
         int selDolType = isPreCheck == false ? selectedDol.GetMyDolType() : chkDolType;
@@ -328,6 +380,7 @@ public class Dols : MonoBehaviour {
             if(selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
+                warnDols.Add(curDol);
             }
 
             if (selDolType == curDol.GetMyDolType())
@@ -365,6 +418,7 @@ public class Dols : MonoBehaviour {
             if (selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
+                warnDols.Add(curDol);
             }
 
             if (selDolType == curDol.GetMyDolType())
@@ -403,6 +457,7 @@ public class Dols : MonoBehaviour {
             if (selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
+                warnDols.Add(curDol);
             }
 
             if (selDolType == curDol.GetMyDolType())
@@ -441,6 +496,7 @@ public class Dols : MonoBehaviour {
             if (selDolType != curDol.GetMyDolType())
             {
                 removeDols.Add(curDol);
+                warnDols.Add(curDol);
             }
 
             if (selDolType == curDol.GetMyDolType())
@@ -457,6 +513,7 @@ public class Dols : MonoBehaviour {
                 break;
             }
         }
+
         return score;
     }
 
